@@ -1,0 +1,126 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="builtsmart-icons.html">
+
+<link rel="lazy-import" href="builtsmart-signin.html">
+<link rel="lazy-import" href="builtsmart-404.html">
+
+<dom-module id="builtsmart-app">
+  <template>
+    <style>
+       :host {
+        --app-background-color: #212121;
+        --app-primary-color: #FFC107;
+        --text-primary-color: rgba(255, 255, 255, 0.8);
+        --text-secondary-color: rgba(255, 255, 255, 0.5);
+        display: block;
+        background: var(--app-background-color);
+        height: 100vh;
+      }
+    </style>
+
+    <app-location route="{{route}}" url-space-regex="^[[rootPath]]"></app-location>
+    <app-route route="{{route}}" pattern="[[rootPath]]:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+
+    <firebase-app auth-domain="smarthome-ca5b7.firebaseapp.com" database-url="https://smarthome-ca5b7.firebaseio.com" api-key="AIzaSyCQR0NEf-tFNci7fUU7j0Hj9H5cMikb5EQ"
+      storage-bucket="smarthome-ca5b7.appspot.com" messaging-sender-id="862212750302">
+    </firebase-app>
+
+    <firebase-auth id="auth" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}">
+    </firebase-auth>
+
+    <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
+      <builtsmart-signin name="signin" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-signin>
+      <builtsmart-404 name="404"></builtsmart-404>
+    </iron-pages>
+  </template>
+
+  <script>
+    class BuiltSmartApp extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-app';
+      }
+
+      static get properties() {
+        return {
+          user: {
+            type: Object,
+            value: Object
+          },
+          userData: {
+            type: Object,
+            value: Object
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+          routeData: Object,
+          subroute: String,
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page, signedIn, statusKnown)',
+        ];
+      }
+
+      _routePageChanged(page, signedIn, statusKnown) {
+        if (page === undefined) {
+          return;
+        }
+
+        if (this.statusKnown && !this.signedIn) {
+          this.page = 'signin';
+          return;
+        }
+
+        if (this.statusKnown && this.signedIn && this.userData.email) {
+          if (!this.userData.walkthrough) {
+            this.page = 'walkthrough'; // If the user has not completed redirect to the walkthrough page
+            return;
+          }
+          this.page = page || 'dashboard';
+        }
+
+      }
+
+      _pageChanged(page) {
+        // Load page import on demand. Show 404 page if fails
+        var resolvedPageUrl = this.resolveUrl('builtsmart-' + page + '.html');
+        Polymer.importHref(
+          resolvedPageUrl,
+          null,
+          this._showPage404.bind(this),
+          true);
+      }
+
+      _showPage404() {
+        this.page = '404';
+      }
+    }
+
+    window.customElements.define(BuiltSmartApp.is, BuiltSmartApp);
+  </script>
+</dom-module>

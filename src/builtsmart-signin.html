@@ -1,0 +1,307 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-signin">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        padding: 24px;
+      }
+
+      .hero {
+        width: 100%;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .signin-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-top: 48px;
+      }
+
+      .signin-container>* {
+        display: block;
+      }
+
+      .signin-container>paper-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        margin: 8px;
+        width: 240px;
+        text-align: center;
+      }
+
+      .signup-container {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .signup-container>paper-button {
+        background: var(--app-primary-color);
+        color: white;
+      }
+    </style>
+
+    <firebase-auth id="auth" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}">
+    </firebase-auth>
+
+    <div class="container" hidden$="[[_shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
+      <div class="hero">
+
+      </div>
+
+      <div class="signin-container">
+
+        <paper-button id="signinFacebook">Sign in with Facebook</paper-button>
+        <paper-button id="signinEmail">Sign in with Email</paper-button>
+        <paper-button id="signinPhone">Sign in with Phone</paper-button>
+
+      </div>
+
+    </div>
+
+    <div class="signin-with-email-container" hidden$="[[_shouldShowEmailContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
+      <paper-input label="Email Address" type="email" value="{{_email}}"></paper-input>
+      <paper-input label="Password" type="password" value="{{_password}}"></paper-input>
+      <br>
+      <div class="signup-container">
+        <paper-button id="signin">Signin</paper-button>
+        <paper-button id="signup">Sign up</paper-button>
+      </div>
+    </div>
+
+    <div class="signin-with-phone-container" hidden$="[[_shouldShowPhoneContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
+      <div class="pre" hidden$="[[_isSmsSent]]">
+        <h1>
+          Enter your phone number
+        </h1>
+
+        <paper-input label="Phone Number" value="{{_phoneNumber}}"></paper-input>
+
+        <br>
+        <div class="signup-container">
+          <paper-button id="verify" on-click="_verifyPhoneNumber">Verify</paper-button>
+        </div>
+      </div>
+
+      <div class="post" hidden$="[[!_isSmsSent]]">
+        <h1>Verify your phone number</h1>
+
+        <h2>Enter the 6-digit code we sent to [[_phoneNumber]]</h2>
+
+        <paper-input label="6-digit code" value="{{_code}}"></paper-input>
+
+        <br>
+        <div class="signup-container">
+          <paper-button id="continue" on-click="_continuePhoneNumber">Continue</paper-button>
+        </div>
+      </div>
+    </div>
+
+
+  </template>
+
+  <script>
+    class BuiltSmartSignin extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-signin';
+      }
+
+      static get properties() {
+        return {
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          _isSignupEmailContainerActive: {
+            type: Boolean,
+            value: false
+          },
+          _isSignupPhoneContainerActive: {
+            type: Boolean,
+            value: false
+          },
+          _email: String,
+          _password: String,
+          _phoneNumber: Number,
+          _code: String,
+          _isSmsSent: {
+            type: Boolean,
+            value: false
+          }
+        }
+      }
+
+      static get observers() {
+        return [
+          '_toggleSignInWithEmailListener(_isSignupEmailContainerActive)'
+        ]
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        if (this.$.signinFacebook) {
+          this.$.signinFacebook.addEventListener('click', e => this._signin('facebook'));
+        }
+        if (this.$.signinEmail) {
+          this.$.signinEmail.addEventListener('click', e => this._signin('email'));
+        }
+        if (this.$.signinPhone) {
+          this.$.signinPhone.addEventListener('click', e => this._signin('phone'));
+        }
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        this.$.signinFacebook.removeEventListener('click', e => this._signin('facebook'));
+        this.$.signinEmail.removeEventListener('click', e => this._signin('email'));
+        this.$.signinPhone.removeEventListener('click', e => this._signin('phone'));
+      }
+
+      _signin(provider) {
+
+        switch (provider) {
+          case 'facebook':
+            this._isSignupPhoneContainerActive = false;
+            this._isSignupEmailContainerActive = false;
+            this.$.auth.signInWithPopup(provider)
+              .then(response => {
+                console.log(response);
+              })
+              .catch(err => {
+                console.error(err);
+              });
+            break;
+          case 'email':
+            console.log("SHOW EMAIL/PASSWORD");
+            this._isSignupEmailContainerActive = true;
+            this._isSignupPhoneContainerActive = false;
+            break;
+          case 'phone':
+            console.log("SHOW PHONE");
+            this._isSignupPhoneContainerActive = true;
+            this._isSignupEmailContainerActive = false;
+            break;
+          default:
+            break;
+        }
+      }
+
+      _toggleSignInWithEmailListener(_isSignupEmailContainerActive) {
+        if (_isSignupEmailContainerActive) {
+          this.$.signin.addEventListener('click', e => {
+            this._signinWithEmail();
+          });
+          this.$.signup.addEventListener('click', e => {
+            this._signupWithEmail();
+          });
+        } else {
+          this.$.signin.removeEventListener('click', e => {
+            this._signinWithEmail();
+          });
+          this.$.signup.removeEventListener('click', e => {
+            this._signupWithEmail();
+          });
+        }
+      }
+
+      _signupWithEmail() {
+        this.$.auth.createUserWithEmailAndPassword(this._email, this._password)
+          .then(response => {
+            console.log(response);
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      }
+
+      _signinWithEmail() {
+        this.$.auth.signInWithEmailAndPassword(this._email, this._password)
+          .then(response => {
+            console.log(response);
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      }
+
+      _shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
+        if (_isSignupEmailContainerActive || _isSignupPhoneContainerActive) {
+          return true;
+        }
+      }
+
+      _shouldShowEmailContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
+        if (!_isSignupEmailContainerActive) {
+          return true;
+        }
+      }
+
+      _shouldShowPhoneContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
+        if (!_isSignupPhoneContainerActive) {
+          return true;
+        }
+      }
+
+      _verifyPhoneNumber() {
+        this._resetRecapcha();
+        firebase.auth().signInWithPhoneNumber("+1" + this._phoneNumber, window.recaptchaVerifier)
+          .then(confirmationResult => {
+            // SMS sent. Prompt user to type the code from the message, then sign the
+            // user in with confirmationResult.confirm(code).
+            console.log("SMS SENT");
+            window.confirmationResult = confirmationResult;
+            this._isSmsSent = true;
+          }).catch(err => {
+            console.error(err);
+          });
+      }
+
+
+      _resetRecapcha() {
+        var oldRecapcha = document.getElementById("recapcha-container");
+        oldRecapcha && (oldRecapcha.outerHTML = "");
+        var recapcha = document.createElement("div")
+        recapcha.id = "recapcha-container"
+        document.body.appendChild(recapcha);
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recapcha-container", {
+          'size': 'invisible',
+          'callback': function (response) {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+            console.log("recapcha solved")
+          }
+        });
+      }
+
+      _continuePhoneNumber() {
+        confirmationResult.confirm(this._code)
+          .then(response => {
+            console.log(response.user);
+          }).catch(err => {
+            console.err(err);
+          });
+      }
+    }
+
+    window.customElements.define(BuiltSmartSignin.is, BuiltSmartSignin);
+  </script>
+</dom-module>

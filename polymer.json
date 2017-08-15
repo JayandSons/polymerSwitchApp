@@ -3,6 +3,8 @@
   "shell": "src/builtsmart-app.html",
   "fragments": [
     "src/builtsmart-signin.html",
+    "src/builtsmart-setup.html",
+    "src/builtsmart-walkthrough.html",
     "src/builtsmart-404.html"
   ],
   "sources": [

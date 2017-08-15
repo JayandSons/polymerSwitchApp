@@ -41,7 +41,6 @@
     <firebase-document path="/users/[[user.uid]]" data="{{userData}}">
     </firebase-document>
 
-
     <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
       <builtsmart-signin name="signin" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-signin>
       <builtsmart-setup name="setup" user-data="{{userData}}" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-setup>

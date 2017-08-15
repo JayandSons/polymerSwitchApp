@@ -1,0 +1,170 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+
+<link rel="import" href="builtsmart-slider.html">
+<link rel="import" href="builtsmart-progress-dots.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-walkthrough">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: flex;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        flex-direction: column;
+      }
+
+      builtsmart-slider {
+        height: 96px;
+      }
+
+      builtsmart-slider div {
+        width: 100%;
+        height: 100%;
+      }
+
+      builtsmart-progress-dots {
+        height: 20px;
+        margin-top: 26px;
+      }
+
+      #next,
+      #setup {
+        position: absolute;
+        bottom: 140px;
+      }
+
+      .slide-1,
+      .slide-2,
+      .slide-3 {
+        width: 100%;
+        height: 500px;
+      }
+
+      .slide-1 {
+        background-color: tomato
+      }
+
+      .slide-2 {
+        background-color: blue
+      }
+
+      .slide-3 {
+        background-color: green
+      }
+    </style>
+
+    <builtsmart-slider selected="[[_selected]]">
+      <div class="slide-1">
+      </div>
+      <div class="slide-2">
+      </div>
+      <div class="slide-3">
+      </div>
+    </builtsmart-slider>
+
+    <builtsmart-progress-dots value="{{_currentDot}}" max="{{_max}}"></builtsmart-progress-dots>
+
+    <template is="dom-if" if="{{_shouldRenderNextButton(_selected)}}">
+      <button id="next" icon="arrow-forward">Temp::Next</button>
+    </template>
+
+
+
+
+  </template>
+
+  <script>
+    /**
+     * `builtsmart-walkthrough`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class BuiltSmartWalkthrough extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-walkthrough';
+      }
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          _selected: {
+            type: Number,
+            value: 0
+          },
+          _max: {
+            type: Number,
+            value: 3
+          },
+          _currentDot: {
+            type: Number,
+            value: 1
+          },
+          isWalkthroughComplete: {
+            type: Boolean,
+            notify: true
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          Polymer.dom(this.root).querySelector('#next').addEventListener('click', e => this._progress());
+        });
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        Polymer.dom(this.root).querySelector('#next').removeEventListener('click', e => this._progress());
+        Polymer.dom(this.root).querySelector('#setup').removeEventListener('click', e => this._updateIsWalkthroughComplete());
+
+      }
+
+      _progress() {
+        if (this._selected == this._max - 1) {
+          return;
+        }
+        this._selected++;
+        this._currentDot = this._selected + 1;
+      }
+
+      _shouldRenderNextButton(_selected) {
+        // if (this._selected != this._max - 1) {
+        //   return true;
+        // }
+
+        if (this._selected == this._max - 1) {
+          this.userData.isWalkthroughComplete = true;
+          this.notifyPath('userData.isWalkthroughComplete');
+        }
+        return true;
+      }
+
+      _shouldRenderSetupProfileButton(_selected) {
+        if (this._selected == this._max - 1) {
+          return true;
+        }
+      }
+
+      _updateIsWalkthroughComplete() {
+        this.isWalkthroughComplete = true;
+      }
+
+    }
+
+    window.customElements.define(BuiltSmartWalkthrough.is, BuiltSmartWalkthrough);
+  </script>
+</dom-module>

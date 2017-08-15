@@ -1,0 +1,73 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-slider">
+  <template>
+    <style>
+       :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #slides {
+        display: flex;
+        position: relative;
+        will-change: transform;
+        width: 100%;
+        height: 100%;
+        transition: transform 300ms ease-in-out;
+      }
+
+       ::slotted(div) {
+        flex-shrink: 0;
+      }
+    </style>
+
+    <div id="slides">
+      <slot id="slot">
+      </slot>
+    </div>
+  </template>
+
+  <script>
+    /**
+     * `builtsmart-slider`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class BuiltSmartSlider extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-slider';
+      }
+      static get properties() {
+        return {
+          selected: {
+            type: Number,
+            value: 0,
+            notify: true
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_updateSelected(selected)'
+        ]
+      }
+      _updateSelected(selected) {
+        const percent = selected * 100;
+        this.$.slides.style.transform = `translate3d(-${percent}%, 0, 0)`;
+      }
+
+    }
+
+    window.customElements.define(BuiltSmartSlider.is, BuiltSmartSlider);
+  </script>
+</dom-module>

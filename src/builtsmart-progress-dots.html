@@ -1,0 +1,97 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-progress-dots">
+  <template>
+    <style>
+       :host {
+        display: flex;
+        height: 100%;
+        align-items: center;
+      }
+
+      span {
+        display: inline-block;
+        height: 8px;
+        width: 8px;
+        border-radius: 100%;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+        cursor: pointer;
+        margin: 4px;
+        opacity: 0.6;
+        @apply --ac-shadow-3;
+      }
+
+      .current {
+        opacity: 1;
+        transform: scale3d(1.25, 1.25, 1);
+        transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+      }
+    </style>
+
+    <template is="dom-repeat" items="[[_dotsArr]]">
+      <span class$="[[_toggleCurrent(index, value)]]" on-click="_updateProgress"></span>
+    </template>
+
+  </template>
+
+  <script>
+    /**
+     * `builtsmart-progress-dots`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class BuiltSmartProgressDots extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-progress-dots';
+      }
+      static get properties() {
+        return {
+          value: {
+            type: Number,
+            value: 0,
+            notify: true
+          },
+          max: {
+            type: Number,
+            value: 10
+          },
+          _dotsArr: {
+            type: Array,
+            value: []
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_initDots(value, max)'
+        ]
+      }
+
+      _initDots(value, max) {
+        this._dotsArr.length = max;
+      }
+
+      _toggleCurrent(index, value) {
+        if (index + 1 == value) {
+          return 'current';
+        }
+      }
+
+      _updateProgress(e) {
+        this.value = e.model.index + 1;
+      }
+
+
+    }
+
+    window.customElements.define(BuiltSmartProgressDots.is, BuiltSmartProgressDots);
+  </script>
+</dom-module>

@@ -4,11 +4,14 @@
 
 <link rel="import" href="../bower_components/polymerfire/firebase-app.html">
 <link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-document.html">
 
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="builtsmart-icons.html">
 
 <link rel="lazy-import" href="builtsmart-signin.html">
+<link rel="lazy-import" href="builtsmart-setup.html">
+<link rel="lazy-import" href="builtsmart-walkthrough.html">
 <link rel="lazy-import" href="builtsmart-404.html">
 
 <dom-module id="builtsmart-app">
@@ -35,8 +38,14 @@
     <firebase-auth id="auth" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}">
     </firebase-auth>
 
+    <firebase-document path="/users/[[user.uid]]" data="{{userData}}">
+    </firebase-document>
+
+
     <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
       <builtsmart-signin name="signin" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-signin>
+      <builtsmart-setup name="setup" user-data="{{userData}}" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-setup>
+      <builtsmart-walkthrough name="walkthrough" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-walkthrough>
       <builtsmart-404 name="404"></builtsmart-404>
     </iron-pages>
   </template>
@@ -82,11 +91,12 @@
 
       static get observers() {
         return [
-          '_routePageChanged(routeData.page, signedIn, statusKnown)',
+          '_routePageChanged(routeData.page, signedIn, statusKnown, userData.*)',
         ];
       }
 
-      _routePageChanged(page, signedIn, statusKnown) {
+      _routePageChanged(page, signedIn, statusKnown, userData) {
+
         if (page === undefined) {
           return;
         }
@@ -96,17 +106,25 @@
           return;
         }
 
-        if (this.statusKnown && this.signedIn && this.userData.email) {
-          if (!this.userData.walkthrough) {
+        if (this.statusKnown && this.signedIn && this.userData.ts) {
+          if (!this.userData.isProfileComplete) {
+            this.page = 'setup';
+            return;
+          }
+          if (!this.userData.isWalkthroughComplete) {
             this.page = 'walkthrough'; // If the user has not completed redirect to the walkthrough page
             return;
           }
           this.page = page || 'dashboard';
         }
 
+
+        // this.page = 'signin';
+
       }
 
       _pageChanged(page) {
+        console.log(page)
         // Load page import on demand. Show 404 page if fails
         var resolvedPageUrl = this.resolveUrl('builtsmart-' + page + '.html');
         Polymer.importHref(

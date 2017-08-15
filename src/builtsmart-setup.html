@@ -1,0 +1,170 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-setup">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        padding: 24px;
+      }
+
+      paper-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        margin: 8px;
+        width: 240px;
+        text-align: center;
+      }
+
+      .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+      }
+    </style>
+
+    <div>
+
+      <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
+        <div name="type" class="container">
+          <paper-button id="installer">Installer</paper-button>
+          <br><br><br>
+          <paper-button id="user">User</paper-button>
+        </div>
+        <div name="join" class="container">
+          <paper-button id="have" on-click="_updatePage">I have a Unit ID</paper-button>
+          <br><br><br>
+          <paper-button id="dont" on-click="_setProfileCompleteStatus">I don't</paper-button>
+        </div>
+
+        <div name="join-unit">
+          <h1>
+            Enter the Unit number
+          </h1>
+          <paper-input label="Unit number" value="{{_unitNumber}}"></paper-input>
+          <div class="flex-end">
+            <paper-button on-click="_joinUnit">Add</paper-button>
+          </div>
+        </div>
+      </iron-pages>
+
+
+
+    </div>
+
+
+  </template>
+
+  <script>
+    class BuiltSmartSetup extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-setup';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          },
+          _unitNumber: {
+            type: Number
+          }
+        }
+      }
+
+      static get observers() {
+        return []
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          this.$.installer.addEventListener('click', e => {
+            this._setUserType('installer');
+          });
+          this.$.user.addEventListener('click', e => {
+            this._setUserType('user');
+          });
+
+          if (this.userData.userType == '') {
+            this.page = 'type';
+          } else if (this.userData.userType == 'user') {
+            this.page = 'join';
+          }
+        });
+      }
+
+      disconnectedCallback() {
+        super.disconnectedCallback();
+        this.$.installer.removeEventListener('click', e => {
+          this._setUserType('installer');
+        });
+        this.$.user.removeEventListener('click', e => {
+          this._setUserType('user');
+        });
+      }
+
+      _setUserType(type) {
+        this.userData.userType = type;
+        this.notifyPath('userData.userType');
+
+        if (type == 'installer') {
+          this.userData.isProfileComplete = true;
+          this.notifyPath('userData.isProfileComplete');
+        } else if (type == 'user') {
+          this.page = 'join';
+        }
+      }
+
+      _setProfileCompleteStatus() {
+        this.userData.isProfileComplete = true;
+        this.notifyPath('userData.isProfileComplete');
+      }
+
+      _updatePage() {
+        this.page = 'join-unit';
+      }
+
+      _joinUnit() {
+        firebase.database().ref(`/users/${this.user.uid}/units`)
+          .push({
+            unitNumber: this._unitNumber
+          });
+        this.userData.isProfileComplete = true;
+        this.notifyPath('userData.isProfileComplete');
+      }
+
+    }
+
+    window.customElements.define(BuiltSmartSetup.is, BuiltSmartSetup);
+  </script>
+</dom-module>

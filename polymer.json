@@ -20,6 +20,19 @@
     "rules": ["polymer-2"]
   },
   "builds": [{
-    "preset": "es6-bundled"
+    "name": "es6-bundled",
+    "js": {
+      "minify": false,
+      "compile": false
+    },
+    "css": {
+      "minify": true
+    },
+    "html": {
+      "minify": true
+    },
+    "bundle": true,
+    "addServiceWorker": false,
+    "addPushManifest": true
   }]
 }

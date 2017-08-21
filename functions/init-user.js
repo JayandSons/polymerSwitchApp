@@ -7,7 +7,6 @@ exports.handler = (admin, ref, event) => {
   const newUserRef = ref.child(`/users/${uid}`);
 
   return newUserRef.set({
-    username: '',
     email: email,
     displayName: displayName,
     photoURL: photoURL,

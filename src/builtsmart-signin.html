@@ -2,8 +2,11 @@
 <link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
 
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="builtsmart-icons.html">
 
 <dom-module id="builtsmart-signin">
   <template>
@@ -13,10 +16,17 @@
         padding: 24px;
       }
 
+      .container {
+        height: calc(100vh - 48px);
+        display: flex;
+        flex-direction: column;
+      }
+
       .hero {
         width: 100%;
         height: 300px;
         background: rgba(255, 255, 255, 0.07);
+        height: 100%;
       }
 
       .signin-container {
@@ -35,8 +45,44 @@
         background: rgba(255, 255, 255, 0.2);
         color: white;
         margin: 8px;
-        width: 240px;
-        text-align: center;
+        width: 280px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 0;
+        height: 70px;
+        overflow: hidden;
+      }
+
+      .icon-container {
+        background: rgba(255, 255, 255, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 80px;
+        width: 40px;
+        border-top-left-radius: 3px;
+        border-bottom-left-radius: 3px;
+      }
+
+      paper-button>:not(.icon) {
+        margin-right: 8px;
+      }
+
+      paper-button>span {
+        flex: 1;
+      }
+
+      #signinFacebook {
+        background: #0D47A1;
+      }
+
+      #signinEmail {
+        background: #FF9800;
+      }
+
+      #signinPhone {
+        background: #4CAF50;
       }
 
       .signup-container {
@@ -47,6 +93,10 @@
       .signup-container>paper-button {
         background: var(--app-primary-color);
         color: white;
+      }
+
+      paper-spinner-lite {
+        --paper-spinner-color: rgba(255, 255, 255, 0.5);
       }
     </style>
 
@@ -59,11 +109,28 @@
       </div>
 
       <div class="signin-container">
-
-        <paper-button id="signinFacebook">Sign in with Facebook</paper-button>
-        <paper-button id="signinEmail">Sign in with Email</paper-button>
-        <paper-button id="signinPhone">Sign in with Phone</paper-button>
-
+        <paper-button id="signinFacebook">
+          <div class="icon-container">
+            <iron-icon class="icon" icon="builtsmart-icons:facebook"></iron-icon>
+          </div>
+          <span>Sign in with Facebook</span>
+          <iron-icon hidden$="[[_loading]]" icon="builtsmart-icons:chevron-right"></iron-icon>
+          <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
+        </paper-button>
+        <paper-button id="signinEmail">
+          <div class="icon-container">
+            <iron-icon class="icon" icon="builtsmart-icons:email"></iron-icon>
+          </div>
+          <span>Sign in with Email</span>
+          <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
+        </paper-button>
+        <paper-button id="signinPhone">
+          <div class="icon-container">
+            <iron-icon class="icon" icon="builtsmart-icons:smartphone"></iron-icon>
+          </div>
+          <span>Sign in with Phone</span>
+          <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
+        </paper-button>
       </div>
 
     </div>
@@ -147,6 +214,10 @@
           _isSmsSent: {
             type: Boolean,
             value: false
+          },
+          _loading: {
+            type: Boolean,
+            value: false
           }
         }
       }
@@ -181,14 +252,17 @@
 
         switch (provider) {
           case 'facebook':
+            this._loading = true;
             this._isSignupPhoneContainerActive = false;
             this._isSignupEmailContainerActive = false;
             this.$.auth.signInWithPopup(provider)
               .then(response => {
                 console.log(response);
+                this._loading = false;
               })
               .catch(err => {
                 console.error(err);
+                this._loading = false;
               });
             break;
           case 'email':
@@ -261,14 +335,18 @@
       }
 
       _shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
+        console.log(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)
         if (_isSignupEmailContainerActive || _isSignupPhoneContainerActive) {
           return true;
         }
       }
 
       _shouldShowEmailContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
-        if (!_isSignupEmailContainerActive) {
+        if (!this._isSignupEmailContainerActive) {
+          console.log("HIDE")
           return true;
+        } else {
+          console.log("SHOW")
         }
       }
 

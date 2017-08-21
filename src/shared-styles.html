@@ -23,10 +23,26 @@
         justify-content: flex-end;
       }
 
-      paper-input {
+      paper-input,
+      gold-phone-input {
         --paper-input-container-input-color: white;
         /* --paper-input-container-color: green; */
         --paper-input-container-focus-color: var(--app-primary-color);
+      }
+
+      gold-phone-input {
+        --gold-phone-input-country-code: white !important;
+      }
+
+      paper-icon-button.close {
+        color: white;
+        margin-left: -12px;
+        margin-top: -12px;
+        opacity: 0.7;
+      }
+
+      paper-toast {
+        --paper-toast-background-color: #F57C00;
       }
     </style>
   </template>

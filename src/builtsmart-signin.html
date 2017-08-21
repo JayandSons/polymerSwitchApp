@@ -4,6 +4,9 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="builtsmart-icons.html">
@@ -25,8 +28,15 @@
       .hero {
         width: 100%;
         height: 300px;
-        background: rgba(255, 255, 255, 0.07);
+        /* background: rgba(255, 255, 255, 0.07); */
         height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .hero>img {
+        width: 100%;
       }
 
       .signin-container {
@@ -91,87 +101,142 @@
       }
 
       .signup-container>paper-button {
-        background: var(--app-primary-color);
-        color: white;
+        color: var(--app-primary-color);
       }
 
       paper-spinner-lite {
         --paper-spinner-color: rgba(255, 255, 255, 0.5);
+      }
+
+      [slot="prefix"] {
+        color: white;
+        padding-right: 8px;
+      }
+
+      .open {
+        animation: open-from-bottom 300ms forwards;
+      }
+
+      @keyframes open-from-bottom {
+        0% {
+          transform: translate3d(0, 100px, 0);
+          opacity: 0;
+        }
+        100% {
+          transform: translate3d(0, 0, 0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes close-from-top {
+        100% {
+          transform: translate3d(0, 0, 0);
+          opacity: 1;
+        }
+        0% {
+          transform: translate3d(0, 100px, 0);
+          opacity: 0;
+        }
       }
     </style>
 
     <firebase-auth id="auth" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}">
     </firebase-auth>
 
-    <div class="container" hidden$="[[_shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
-      <div class="hero">
-
-      </div>
-
-      <div class="signin-container">
-        <paper-button id="signinFacebook">
-          <div class="icon-container">
-            <iron-icon class="icon" icon="builtsmart-icons:facebook"></iron-icon>
-          </div>
-          <span>Sign in with Facebook</span>
-          <iron-icon hidden$="[[_loading]]" icon="builtsmart-icons:chevron-right"></iron-icon>
-          <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
-        </paper-button>
-        <paper-button id="signinEmail">
-          <div class="icon-container">
-            <iron-icon class="icon" icon="builtsmart-icons:email"></iron-icon>
-          </div>
-          <span>Sign in with Email</span>
-          <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
-        </paper-button>
-        <paper-button id="signinPhone">
-          <div class="icon-container">
-            <iron-icon class="icon" icon="builtsmart-icons:smartphone"></iron-icon>
-          </div>
-          <span>Sign in with Phone</span>
-          <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
-        </paper-button>
-      </div>
-
-    </div>
-
-    <div class="signin-with-email-container" hidden$="[[_shouldShowEmailContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
-      <paper-input label="Email Address" type="email" value="{{_email}}"></paper-input>
-      <paper-input label="Password" type="password" value="{{_password}}"></paper-input>
-      <br>
-      <div class="signup-container">
-        <paper-button id="signin">Signin</paper-button>
-        <paper-button id="signup">Sign up</paper-button>
-      </div>
-    </div>
-
-    <div class="signin-with-phone-container" hidden$="[[_shouldShowPhoneContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]">
-      <div class="pre" hidden$="[[_isSmsSent]]">
-        <h1>
-          Enter your phone number
-        </h1>
-
-        <paper-input label="Phone Number" value="{{_phoneNumber}}"></paper-input>
-
-        <br>
-        <div class="signup-container">
-          <paper-button id="verify" on-click="_verifyPhoneNumber">Verify</paper-button>
+    <iron-pages selected="[[signinPage]]" attr-for-selected="name">
+      <!-- <div name="signin" class="container" hidden$="[[_shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)]]"> -->
+      <div name="signin" class="container">
+        <div class="hero">
+          <img src="/images/hero.png" alt="">
+        </div>
+        <div class="signin-container fade-in">
+          <paper-button id="signinFacebook">
+            <div class="icon-container">
+              <iron-icon class="icon" icon="builtsmart-icons:facebook"></iron-icon>
+            </div>
+            <span>Sign in with Facebook</span>
+            <iron-icon hidden$="[[_loading]]" icon="builtsmart-icons:chevron-right"></iron-icon>
+            <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
+          </paper-button>
+          <paper-button id="signinEmail">
+            <div class="icon-container">
+              <iron-icon class="icon" icon="builtsmart-icons:email"></iron-icon>
+            </div>
+            <span>Sign in with Email</span>
+            <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
+          </paper-button>
+          <paper-button id="signinPhone">
+            <div class="icon-container">
+              <iron-icon class="icon" icon="builtsmart-icons:smartphone"></iron-icon>
+            </div>
+            <span>Sign in with Phone</span>
+            <iron-icon icon="builtsmart-icons:chevron-right"></iron-icon>
+          </paper-button>
         </div>
       </div>
 
-      <div class="post" hidden$="[[!_isSmsSent]]">
-        <h1>Verify your phone number</h1>
+      <div name="signin-email" class="signin-with-email-container open container">
 
-        <h2>Enter the 6-digit code we sent to [[_phoneNumber]]</h2>
+        <paper-icon-button on-click="_closePage" class="close" icon="builtsmart-icons:close"></paper-icon-button>
 
-        <paper-input label="6-digit code" value="{{_code}}"></paper-input>
-
+        <div style="height: 100%;">
+          <paper-input id="email" label="Email Address" type="email" value="{{_email}}"></paper-input>
+          <paper-input id="password" label="Password" type="password" value="{{_password}}"></paper-input>
+        </div>
         <br>
         <div class="signup-container">
-          <paper-button id="continue" on-click="_continuePhoneNumber">Continue</paper-button>
+          <paper-button id="signin" on-click="_signinWithEmail">Signin</paper-button>
+          <paper-button id="signup" on-click="_signupWithEmail">Sign up</paper-button>
         </div>
       </div>
-    </div>
+
+      <div name="signin-phone-pre" class="signin-with-phone-container open container">
+        <paper-icon-button on-click="_closePage" class="close" icon="builtsmart-icons:close"></paper-icon-button>
+
+        <div class="pre container" hidden$="[[_isSmsSent]]">
+          <div style="height: 100%;">
+            <h1>
+              Enter your phone number
+            </h1>
+
+            <paper-input label="Phone Number" value="{{_phoneNumber}}" type="tel">
+              <div slot="prefix">+1 </div>
+            </paper-input>
+
+            <br>
+          </div>
+          <div class="signup-container">
+            <paper-button id="verify" on-click="_verifyPhoneNumber">Continue</paper-button>
+          </div>
+        </div>
+
+
+      </div>
+
+      <div name="signin-phone-post" class="container">
+        <paper-icon-button on-click="_closePage" class="close" icon="builtsmart-icons:close"></paper-icon-button>
+
+        <div class="post container" hidden$="[[!_isSmsSent]]">
+          <div style="height: 100%;">
+
+            <h1>Verify your phone number</h1>
+
+            <h2>Enter the 6-digit code we sent to [[_phoneNumber]]</h2>
+
+            <paper-input label="6-digit code" value="{{_code}}"></paper-input>
+
+            <br>
+          </div>
+          <div class="signup-container">
+            <paper-button id="continue" on-click="_continuePhoneNumber">Continue</paper-button>
+          </div>
+        </div>
+      </div>
+    </iron-pages>
+
+
+
+    <paper-toast id="toast"></paper-toast>
 
 
   </template>
@@ -218,14 +283,16 @@
           _loading: {
             type: Boolean,
             value: false
+          },
+          signinPage: {
+            type: String,
+            value: 'signin'
           }
         }
       }
 
       static get observers() {
-        return [
-          '_toggleSignInWithEmailListener(_isSignupEmailContainerActive)'
-        ]
+        return []
       }
 
       connectedCallback() {
@@ -234,10 +301,14 @@
           this.$.signinFacebook.addEventListener('click', e => this._signin('facebook'));
         }
         if (this.$.signinEmail) {
-          this.$.signinEmail.addEventListener('click', e => this._signin('email'));
+          this.$.signinEmail.addEventListener('click', e => {
+            this.signinPage = 'signin-email';
+          });
         }
         if (this.$.signinPhone) {
-          this.$.signinPhone.addEventListener('click', e => this._signin('phone'));
+          this.$.signinPhone.addEventListener('click', e => {
+            this.signinPage = 'signin-phone-pre';
+          });
         }
       }
 
@@ -246,6 +317,10 @@
         this.$.signinFacebook.removeEventListener('click', e => this._signin('facebook'));
         this.$.signinEmail.removeEventListener('click', e => this._signin('email'));
         this.$.signinPhone.removeEventListener('click', e => this._signin('phone'));
+      }
+
+      _closePage() {
+        this.signinPage = 'signin';
       }
 
       _signin(provider) {
@@ -261,7 +336,9 @@
                 this._loading = false;
               })
               .catch(err => {
-                console.error(err);
+                this.$.toast.text = err;
+                this.$.toast.open();
+                console.log(err);
                 this._loading = false;
               });
             break;
@@ -280,62 +357,63 @@
         }
       }
 
-      _toggleSignInWithEmailListener(_isSignupEmailContainerActive) {
-        if (_isSignupEmailContainerActive) {
-          this.$.signin.addEventListener('click', e => {
-            this._signinWithEmail();
-          });
-          this.$.signup.addEventListener('click', e => {
-            this._signupWithEmail();
-          });
+      _validateCredentials() {
+        const re =
+          /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+        let isValidEmail = false;
+        let isValidPassword = false;
+        if (re.test(this._email)) {
+          isValidEmail = true;
+          this.$.email.invalid = false;
         } else {
-          this.$.signin.removeEventListener('click', e => {
-            this._signinWithEmail();
-          });
-          this.$.signup.removeEventListener('click', e => {
-            this._signupWithEmail();
-          });
+          this.$.email.invalid = true;
+        }
+
+        if (this._password && this._password.length >= 6) {
+          isValidPassword = true;
+          this.$.password.invalid = false;
+        } else {
+          this.$.toast.text = 'Password must contain at least 6 characters.';
+          this.$.toast.open();
+          this.$.password.invalid = true;
+        }
+
+        if (isValidEmail && isValidPassword) {
+          return true;
         }
       }
 
       _signupWithEmail() {
-        this.$.auth.createUserWithEmailAndPassword(this._email, this._password)
-          .then(response => {
-            console.log(response);
-          })
-          .catch(err => {
-            // link Facebook
-            // if (err.code == 'auth/email-already-in-use') {
-            //   this.$.auth.signInWithPopup('facebook')
-            //     .then(response => {
-            //       const credential = firebase.auth.EmailAuthProvider.credential(this._email, this._password);
-            //       firebase.auth().currentUser.link(credential)
-            //         .then(response => {
-            //           console.log(response);
-            //         })
-            //         .catch(err => {
-            //           console.log(err);
-            //         });
-            //     })
-            //     .catch(err => {
-            //       console.error(err);
-            //     });
-            console.log(err);
-          })
+        if (this._validateCredentials()) {
+          this.$.auth.createUserWithEmailAndPassword(this._email, this._password)
+            .then(response => {
+              console.log(response);
+            })
+            .catch(err => {
+              this.$.toast.text = err;
+              this.$.toast.open();
+              console.log(err);
+            });
+        }
       }
 
       _signinWithEmail() {
-        this.$.auth.signInWithEmailAndPassword(this._email, this._password)
-          .then(response => {
-            console.log(response);
-          })
-          .catch(err => {
-            console.error(err);
-          });
+        if (this._validateCredentials()) {
+          this.$.auth.signInWithEmailAndPassword(this._email, this._password)
+            .then(response => {
+              console.log(response);
+            })
+            .catch(err => {
+              this.$.toast.text = err;
+              this.$.toast.open();
+              console.log(err);
+            });
+        }
       }
 
       _shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
-        console.log(_isSignupEmailContainerActive, _isSignupPhoneContainerActive)
+        console.log("Init ", _isSignupEmailContainerActive, _isSignupPhoneContainerActive)
         if (_isSignupEmailContainerActive || _isSignupPhoneContainerActive) {
           return true;
         }
@@ -357,6 +435,12 @@
       }
 
       _verifyPhoneNumber() {
+        if (!this._phoneNumber || this._phoneNumber.length != '10') {
+          this.$.toast.text = 'Invalid phone number';
+          this.$.toast.open();
+          console.log(err);
+          return;
+        }
         this._resetRecapcha();
         firebase.auth().signInWithPhoneNumber("+1" + this._phoneNumber, window.recaptchaVerifier)
           .then(confirmationResult => {
@@ -365,8 +449,16 @@
             console.log("SMS SENT");
             window.confirmationResult = confirmationResult;
             this._isSmsSent = true;
+            this.signinPage = 'signin-phone-post';
+            const reCAPTCHAContainer = document.getElementById("recapcha-container");
+            reCAPTCHAContainer.remove();
+
           }).catch(err => {
-            console.error(err);
+            this.$.toast.text = err;
+            this.$.toast.open();
+            console.log(err);
+            const reCAPTCHAContainer = document.getElementById("recapcha-container");
+            reCAPTCHAContainer.remove();
           });
       }
 
@@ -375,7 +467,7 @@
         var oldRecapcha = document.getElementById("recapcha-container");
         oldRecapcha && (oldRecapcha.outerHTML = "");
         var recapcha = document.createElement("div")
-        recapcha.id = "recapcha-container"
+        recapcha.id = "recapcha-container";
         document.body.appendChild(recapcha);
         window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recapcha-container", {
           'size': 'invisible',
@@ -391,7 +483,9 @@
           .then(response => {
             console.log(response.user);
           }).catch(err => {
-            console.err(err);
+            this.$.toast.text = err;
+            this.$.toast.open();
+            console.log(err);
           });
       }
     }

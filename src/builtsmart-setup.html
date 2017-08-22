@@ -4,7 +4,6 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 
-
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="builtsmart-setup">
@@ -16,11 +15,14 @@
       }
 
       paper-button {
-        background: rgba(255, 255, 255, 0.2);
+        /* background: rgba(255, 255, 255, 0.2); */
         color: white;
         margin: 8px;
         width: 240px;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        color: var(--app-primary-color);
       }
 
       .container {
@@ -30,15 +32,31 @@
         height: 100vh;
         flex-direction: column;
       }
+
+      .container-inner {
+        height: calc(100vh - 48px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .user-type {
+        width: 200px;
+        padding-bottom: 16px;
+      }
     </style>
 
     <div>
 
       <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
         <div name="type" class="container">
-          <paper-button id="installer">Installer</paper-button>
+          <paper-button id="installer">
+            <img class="user-type" src="images/installer.png" alt=""> Installer
+
+          </paper-button>
           <br><br><br>
-          <paper-button id="user">User</paper-button>
+
+          <paper-button id="user">
+            <img class="user-type" src="images/owner.png" alt="">User</paper-button>
         </div>
         <div name="join" class="container">
           <paper-button id="have" on-click="_updatePage">I have a Unit ID</paper-button>
@@ -46,13 +64,15 @@
           <paper-button id="dont" on-click="_setProfileCompleteStatus">I don't</paper-button>
         </div>
 
-        <div name="join-unit">
-          <h1>
-            Enter the Unit number
-          </h1>
-          <paper-input label="Unit number" value="{{_unitNumber}}"></paper-input>
+        <div name="join-unit" class="container-inner">
+          <div style="height: 100%;">
+            <h1>
+              Enter the Unit number
+            </h1>
+            <paper-input label="Unit number" value="{{_unitNumber}}"></paper-input>
+          </div>
           <div class="flex-end">
-            <paper-button on-click="_joinUnit">Add</paper-button>
+            <paper-button style="width: auto;" on-click="_joinUnit">Add</paper-button>
           </div>
         </div>
       </iron-pages>

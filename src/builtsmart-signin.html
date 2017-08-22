@@ -112,32 +112,6 @@
         color: white;
         padding-right: 8px;
       }
-
-      .open {
-        animation: open-from-bottom 300ms forwards;
-      }
-
-      @keyframes open-from-bottom {
-        0% {
-          transform: translate3d(0, 100px, 0);
-          opacity: 0;
-        }
-        100% {
-          transform: translate3d(0, 0, 0);
-          opacity: 1;
-        }
-      }
-
-      @keyframes close-from-top {
-        100% {
-          transform: translate3d(0, 0, 0);
-          opacity: 1;
-        }
-        0% {
-          transform: translate3d(0, 100px, 0);
-          opacity: 0;
-        }
-      }
     </style>
 
     <firebase-auth id="auth" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}">
@@ -185,8 +159,11 @@
         </div>
         <br>
         <div class="signup-container">
-          <paper-button id="signin" on-click="_signinWithEmail">Signin</paper-button>
-          <paper-button id="signup" on-click="_signupWithEmail">Sign up</paper-button>
+          <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
+          <paper-button id="signin" on-click="_signinWithEmail">
+            Signin</paper-button>
+          <paper-button id="signup" on-click="_signupWithEmail">
+            Sign up</paper-button>
         </div>
       </div>
 
@@ -206,6 +183,7 @@
             <br>
           </div>
           <div class="signup-container">
+            <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
             <paper-button id="verify" on-click="_verifyPhoneNumber">Continue</paper-button>
           </div>
         </div>
@@ -228,6 +206,7 @@
             <br>
           </div>
           <div class="signup-container">
+            <paper-spinner-lite hidden$="[[!_loading]]" active="[[_loading]]"></paper-spinner-lite>
             <paper-button id="continue" on-click="_continuePhoneNumber">Continue</paper-button>
           </div>
         </div>
@@ -292,7 +271,13 @@
       }
 
       static get observers() {
-        return []
+        return [
+          '_loadingChanged(_loading)'
+        ]
+      }
+
+      _loadingChanged(_loading) {
+        console.log(_loading)
       }
 
       connectedCallback() {
@@ -332,7 +317,6 @@
             this._isSignupEmailContainerActive = false;
             this.$.auth.signInWithPopup(provider)
               .then(response => {
-                console.log(response);
                 this._loading = false;
               })
               .catch(err => {
@@ -343,12 +327,10 @@
               });
             break;
           case 'email':
-            console.log("SHOW EMAIL/PASSWORD");
             this._isSignupEmailContainerActive = true;
             this._isSignupPhoneContainerActive = false;
             break;
           case 'phone':
-            console.log("SHOW PHONE");
             this._isSignupPhoneContainerActive = true;
             this._isSignupEmailContainerActive = false;
             break;
@@ -385,35 +367,41 @@
       }
 
       _signupWithEmail() {
+        this._loading = true;
         if (this._validateCredentials()) {
           this.$.auth.createUserWithEmailAndPassword(this._email, this._password)
             .then(response => {
-              console.log(response);
+              // console.log(response);
+              this._loading = false;
             })
             .catch(err => {
               this.$.toast.text = err;
               this.$.toast.open();
               console.log(err);
+              this._loading = false;
             });
         }
       }
 
       _signinWithEmail() {
         if (this._validateCredentials()) {
+          this._loading = true;
           this.$.auth.signInWithEmailAndPassword(this._email, this._password)
             .then(response => {
-              console.log(response);
+              // console.log(response);
+              this._loading = false;
             })
             .catch(err => {
               this.$.toast.text = err;
               this.$.toast.open();
               console.log(err);
+              this._loading = false;
             });
         }
       }
 
       _shouldShowContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
-        console.log("Init ", _isSignupEmailContainerActive, _isSignupPhoneContainerActive)
+        // console.log("Init ", _isSignupEmailContainerActive, _isSignupPhoneContainerActive)
         if (_isSignupEmailContainerActive || _isSignupPhoneContainerActive) {
           return true;
         }
@@ -421,10 +409,10 @@
 
       _shouldShowEmailContainer(_isSignupEmailContainerActive, _isSignupPhoneContainerActive) {
         if (!this._isSignupEmailContainerActive) {
-          console.log("HIDE")
+          // console.log("HIDE")
           return true;
         } else {
-          console.log("SHOW")
+          // console.log("SHOW")
         }
       }
 
@@ -441,6 +429,7 @@
           console.log(err);
           return;
         }
+        this._loading = true;
         this._resetRecapcha();
         firebase.auth().signInWithPhoneNumber("+1" + this._phoneNumber, window.recaptchaVerifier)
           .then(confirmationResult => {
@@ -452,6 +441,7 @@
             this.signinPage = 'signin-phone-post';
             const reCAPTCHAContainer = document.getElementById("recapcha-container");
             reCAPTCHAContainer.remove();
+            this._loading = false;
 
           }).catch(err => {
             this.$.toast.text = err;
@@ -459,6 +449,7 @@
             console.log(err);
             const reCAPTCHAContainer = document.getElementById("recapcha-container");
             reCAPTCHAContainer.remove();
+            this._loading = false;
           });
       }
 
@@ -479,13 +470,16 @@
       }
 
       _continuePhoneNumber() {
+        this._loading = true;
         confirmationResult.confirm(this._code)
           .then(response => {
             console.log(response.user);
+            this._loading = false;
           }).catch(err => {
             this.$.toast.text = err;
             this.$.toast.open();
             console.log(err);
+            this._loading = false;
           });
       }
     }

@@ -44,6 +44,32 @@
       paper-toast {
         --paper-toast-background-color: #F57C00;
       }
+
+      .open {
+        animation: open-from-bottom 300ms forwards;
+      }
+
+      @keyframes open-from-bottom {
+        0% {
+          transform: translate3d(0, 100px, 0);
+          opacity: 0;
+        }
+        100% {
+          transform: translate3d(0, 0, 0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes close-from-top {
+        100% {
+          transform: translate3d(0, 0, 0);
+          opacity: 1;
+        }
+        0% {
+          transform: translate3d(0, 100px, 0);
+          opacity: 0;
+        }
+      }
     </style>
   </template>
 </dom-module>

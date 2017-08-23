@@ -1,0 +1,206 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html">
+
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="builtsmart-icons.html">
+
+<dom-module id="builtsmart-drawer">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        width: 300px;
+        height: 100vh;
+        background-color: #333333;
+        box-shadow: 1px 1px 15px #000;
+        z-index: 9999;
+        position: fixed;
+        top: 0;
+        left: 0;
+
+        transform: translate3d(-500px, 0, 0);
+        transition: transform 300ms ease-in-out;
+        overflow: hidden;
+      }
+
+      .header {
+        width: 100%;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 24px;
+        background: #232323;
+      }
+
+      .profile-pic {
+        width: 96px;
+        height: 96px;
+        border-radius: 100%;
+        overflow: hidden;
+      }
+
+      .profile-pic>img {
+        width: 100%;
+      }
+
+      .name {
+        color: var(--primary-text-color);
+        font-size: 20px;
+        margin-top: 16px;
+      }
+
+      paper-icon-item {
+        color: var(--primary-text-color);
+        padding-left: 24px;
+        margin-top: 8px;
+      }
+
+      paper-icon-item:focus {
+        background: transparent;
+        color: var(--app-primary-color);
+      }
+    </style>
+
+    <div class="header">
+      <div class="profile-pic">
+        <img src="[[userData.photoURL]]" alt="">
+      </div>
+      <div class="name">
+        [[userData.displayName]]
+      </div>
+    </div>
+
+    <div class="items">
+
+
+      <template is="dom-repeat" items="[[_getMenuItems(userData.userType)]]">
+        <paper-icon-item on-click="_clickHandler">
+          <iron-icon icon="[[item.icon]]" slot="item-icon"></iron-icon>
+          <paper-ripple></paper-ripple>
+          [[item.name]]
+        </paper-icon-item>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class BuiltSmartDrawer extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-drawer';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          },
+          isDrawerOpened: {
+            type: Boolean,
+            value: false
+          },
+          menuItems: {
+            type: Array,
+            value: () => {
+              return [{
+                  "installer": [{
+                    "name": "Dashboard",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Devices",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Users",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Settings",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Sign Out",
+                    "icon": "builtsmart-icons:close"
+                  }]
+                },
+                {
+                  "user": [{
+                    "name": "Units",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Settings",
+                    "icon": "builtsmart-icons:close"
+                  }, {
+                    "name": "Sign Out",
+                    "icon": "builtsmart-icons:close"
+                  }]
+                }
+              ]
+            }
+          }
+        }
+      }
+
+      static get observers() {
+        return [
+          '_toggleDrawer(isDrawerOpened)'
+        ]
+      }
+
+      _toggleDrawer(isDrawerOpened) {
+        if (isDrawerOpened) {
+          this.style.transform = `translate3d(0, 0, 0)`;
+        } else {
+          this.style.transform = `translate3d(-500px, 0, 0)`;
+        }
+      }
+
+      _getMenuItems(userType) {
+        if (userType == 'installer') {
+          return this.menuItems[0].installer;
+        } else {
+          return this.menuItems[1].user;
+        }
+
+      }
+
+      _clickHandler(e) {
+        if (e.model.item.name == "Sign Out") {
+          this.dispatchEvent(new CustomEvent('signout', {
+            bubbles: true,
+            composed: true
+          }));
+        }
+      }
+
+
+    }
+
+    window.customElements.define(BuiltSmartDrawer.is, BuiltSmartDrawer);
+  </script>
+</dom-module>

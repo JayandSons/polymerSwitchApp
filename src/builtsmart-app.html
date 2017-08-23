@@ -8,6 +8,10 @@
 
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="builtsmart-icons.html">
+<link rel="import" href="builtsmart-toolbar.html">
+<link rel="import" href="builtsmart-drawer.html">
+<link rel="import" href="shared-styles.html">
+
 
 <link rel="lazy-import" href="builtsmart-signin.html">
 <link rel="lazy-import" href="builtsmart-setup.html">
@@ -16,15 +20,23 @@
 
 <dom-module id="builtsmart-app">
   <template>
-    <style>
+    <style include="shared-styles">
        :host {
         --app-background-color: #212121;
         --app-primary-color: #FFAB00;
         --text-primary-color: rgba(255, 255, 255, 0.8);
         --text-secondary-color: rgba(255, 255, 255, 0.5);
+        --primary-text-color: white;
         display: block;
         background: var(--app-background-color);
         height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+      }
+
+      iron-pages {
+        /* background-color: tomato; */
+        height: 100%;
       }
     </style>
 
@@ -41,7 +53,10 @@
     <firebase-document path="/users/[[user.uid]]" data="{{userData}}">
     </firebase-document>
 
-    <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
+    <builtsmart-toolbar id="toolbar" hidden$="[[_shouldRenderToolbar(page)]]" is-drawer-opened="{{isDrawerOpened}}"></builtsmart-toolbar>
+    <builtsmart-drawer id="drawer" is-drawer-opened="{{isDrawerOpened}}" user-data="{{userData}}"></builtsmart-drawer>
+
+    <iron-pages on-click="_closeDrawer" selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
       <builtsmart-signin name="signin" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-signin>
       <builtsmart-setup name="setup" user-data="{{userData}}" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-setup>
       <builtsmart-walkthrough name="walkthrough" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-walkthrough>
@@ -85,13 +100,37 @@
           // This shouldn't be neccessary, but the Analyzer isn't picking up
           // Polymer.Element#rootPath
           rootPath: String,
+          isDrawerOpened: {
+            type: Boolean,
+            value: false
+          }
         };
       }
 
       static get observers() {
         return [
-          '_routePageChanged(routeData.page, signedIn, statusKnown, userData.*)',
+          '_routePageChanged(routeData.page, signedIn, statusKnown, userData.*)'
         ];
+      }
+
+      _closeDrawer(isDrawerOpened) {
+        if (isDrawerOpened) {
+          if (this.isDrawerOpened) {
+            this.isDrawerOpened = false;
+          }
+        }
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.addEventListener('signout', e => {
+          this._signOut();
+        })
+      }
+
+      _signOut() {
+        this.isDrawerOpened = false;
+        this.$.auth.signOut();
       }
 
       _routePageChanged(page, signedIn, statusKnown, userData) {
@@ -123,7 +162,6 @@
       }
 
       _pageChanged(page) {
-        console.log(page)
         // Load page import on demand. Show 404 page if fails
         var resolvedPageUrl = this.resolveUrl('builtsmart-' + page + '.html');
         Polymer.importHref(
@@ -135,6 +173,16 @@
 
       _showPage404() {
         this.page = '404';
+      }
+
+      _shouldRenderToolbar(page) {
+        console.log(page)
+        if (page == 'signin' || page == 'setup' || page == 'walkthrough') {
+          console.log("HIDE")
+          return true;
+        } else {
+          return false;
+        }
       }
     }
 

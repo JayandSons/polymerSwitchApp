@@ -1,0 +1,94 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-toolbar">
+  <template>
+    <style include="shared-styles">
+       :host {
+        height: 56px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        display: flex;
+      }
+
+      paper-icon-button {
+        color: white;
+        /* --paper-icon-button-ink-color: white; */
+      }
+
+      div {
+        color: white;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        padding-left: 24px;
+      }
+    </style>
+
+
+    <paper-icon-button icon="builtsmart-icons:menu" on-click="_toggleDrawer"></paper-icon-button>
+
+    <div>Units</div>
+
+
+  </template>
+
+  <script>
+    class BuiltSmartToolbar extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-toolbar';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          },
+          isDrawerOpened: {
+            type: Boolean,
+            value: true,
+            notify: true
+          }
+        }
+      }
+
+      static get observers() {
+        return []
+      }
+
+      _toggleDrawer() {
+        this.isDrawerOpened = this.isDrawerOpened ? false : true;
+      }
+
+
+    }
+
+    window.customElements.define(BuiltSmartToolbar.is, BuiltSmartToolbar);
+  </script>
+</dom-module>

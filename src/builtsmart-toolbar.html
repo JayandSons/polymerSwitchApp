@@ -33,8 +33,9 @@
 
 
     <paper-icon-button icon="builtsmart-icons:menu" on-click="_toggleDrawer"></paper-icon-button>
+    <!-- <paper-icon-button icon="builtsmart-icons:close" on-click="_toggleDrawer"></paper-icon-button> -->
 
-    <div>Units</div>
+    <div>[[title]]</div>
 
 
   </template>
@@ -74,6 +75,9 @@
             type: Boolean,
             value: true,
             notify: true
+          },
+          title: {
+            type: String
           }
         }
       }

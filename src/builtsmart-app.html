@@ -16,6 +16,8 @@
 <link rel="lazy-import" href="builtsmart-signin.html">
 <link rel="lazy-import" href="builtsmart-setup.html">
 <link rel="lazy-import" href="builtsmart-walkthrough.html">
+<link rel="lazy-import" href="builtsmart-units.html">
+<link rel="lazy-import" href="builtsmart-dashboard.html">
 <link rel="lazy-import" href="builtsmart-404.html">
 
 <dom-module id="builtsmart-app">
@@ -53,13 +55,15 @@
     <firebase-document path="/users/[[user.uid]]" data="{{userData}}">
     </firebase-document>
 
-    <builtsmart-toolbar id="toolbar" hidden$="[[_shouldRenderToolbar(page)]]" is-drawer-opened="{{isDrawerOpened}}"></builtsmart-toolbar>
+    <builtsmart-toolbar id="toolbar" hidden$="[[_shouldRenderToolbar(page)]]" is-drawer-opened="{{isDrawerOpened}}" title="{{pageTitle}}"></builtsmart-toolbar>
     <builtsmart-drawer id="drawer" is-drawer-opened="{{isDrawerOpened}}" user-data="{{userData}}"></builtsmart-drawer>
 
     <iron-pages on-click="_closeDrawer" selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
       <builtsmart-signin name="signin" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-signin>
       <builtsmart-setup name="setup" user-data="{{userData}}" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-setup>
       <builtsmart-walkthrough name="walkthrough" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-walkthrough>
+      <builtsmart-units name="units" user="{{user}}" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-units>
+      <builtsmart-dashboard name="units" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-dashboard>
       <builtsmart-404 name="404"></builtsmart-404>
     </iron-pages>
   </template>
@@ -103,6 +107,9 @@
           isDrawerOpened: {
             type: Boolean,
             value: false
+          },
+          pageTitle: {
+            type: String
           }
         };
       }
@@ -125,6 +132,10 @@
         super.connectedCallback();
         this.addEventListener('signout', e => {
           this._signOut();
+        });
+
+        this.addEventListener('page-changed', e => {
+          this.pageTitle = e.detail.pageTitle;
         })
       }
 
@@ -153,7 +164,7 @@
             this.page = 'walkthrough'; // If the user has not completed redirect to the walkthrough page
             return;
           }
-          this.page = page || 'dashboard';
+          this.page = page || 'units';
         }
 
 

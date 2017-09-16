@@ -1,0 +1,64 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-unit">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+      }
+    </style>
+
+
+    fdfdf
+
+  </template>
+
+  <script>
+    class BuiltSmartUnit extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-unit';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          }
+        }
+      }
+
+      static get observers() {
+        return []
+      }
+
+
+
+    }
+
+    window.customElements.define(BuiltSmartUnit.is, BuiltSmartUnit);
+  </script>
+</dom-module>

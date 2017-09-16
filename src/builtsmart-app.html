@@ -7,6 +7,7 @@
 <link rel="import" href="../bower_components/polymerfire/firebase-document.html">
 
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="builtsmart-mixins.html">
 <link rel="import" href="builtsmart-icons.html">
 <link rel="import" href="builtsmart-toolbar.html">
 <link rel="import" href="builtsmart-drawer.html">
@@ -17,6 +18,7 @@
 <link rel="lazy-import" href="builtsmart-setup.html">
 <link rel="lazy-import" href="builtsmart-walkthrough.html">
 <link rel="lazy-import" href="builtsmart-units.html">
+<link rel="lazy-import" href="builtsmart-unit.html">
 <link rel="lazy-import" href="builtsmart-dashboard.html">
 <link rel="lazy-import" href="builtsmart-404.html">
 
@@ -63,13 +65,14 @@
       <builtsmart-setup name="setup" user-data="{{userData}}" user="{{user}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-setup>
       <builtsmart-walkthrough name="walkthrough" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-walkthrough>
       <builtsmart-units name="units" user="{{user}}" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-units>
+      <builtsmart-unit name="units" user="{{user}}" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-unit>
       <builtsmart-dashboard name="units" user-data="{{userData}}" signed-in="{{signedIn}}" status-known="{{statusKnown}}"></builtsmart-dashboard>
       <builtsmart-404 name="404"></builtsmart-404>
     </iron-pages>
   </template>
 
   <script>
-    class BuiltSmartApp extends Polymer.Element {
+    class BuiltSmartApp extends BuiltSmartMixins(Polymer.Element) {
       static get is() {
         return 'builtsmart-app';
       }
@@ -136,7 +139,11 @@
 
         this.addEventListener('page-changed', e => {
           this.pageTitle = e.detail.pageTitle;
-        })
+        });
+
+        this.addEventListener('html-imported', e => {
+          this.$.drawer.closeDrawer();
+        });
       }
 
       _signOut() {
@@ -173,13 +180,14 @@
       }
 
       _pageChanged(page) {
-        // Load page import on demand. Show 404 page if fails
-        var resolvedPageUrl = this.resolveUrl('builtsmart-' + page + '.html');
-        Polymer.importHref(
-          resolvedPageUrl,
-          null,
-          this._showPage404.bind(this),
-          true);
+        let resolvedPageUrl = this.resolveUrl('builtsmart-' + page + '.html');
+        Promise.all([
+          this.importHref(resolvedPageUrl)
+        ]).then(values => {
+          this.dispatchEvent(new CustomEvent('html-imported'));
+        }, e => {
+          this.dispatchEvent(new CustomEvent('html-imported'));
+        });
       }
 
       _showPage404() {
@@ -187,7 +195,6 @@
       }
 
       _shouldRenderToolbar(page) {
-        console.log(page)
         if (page == 'signin' || page == 'setup' || page == 'walkthrough') {
           console.log("HIDE")
           return true;

@@ -1,0 +1,295 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="builtsmart-icons.html">
+
+<dom-module id="builtsmart-units">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        height: 100%;
+        padding: 16px;
+        overflow-y: scroll;
+      }
+
+      paper-fab {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        background-color: var(--app-primary-color);
+      }
+
+      .home-icon {
+        fill: white;
+        width: 96px;
+        height: 96px;
+        opacity: 0.8;
+        margin-left: 30px;
+      }
+
+      .unit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+        margin-bottom: 24px;
+      }
+
+      .unit-name {
+        font-size: 16px;
+        color: var(--primary-text-color);
+        margin-top: -16px;
+      }
+
+      .client-name {
+        font-size: 14px;
+        color: var(--primary-text-color);
+        opacity: 0.7;
+      }
+
+      .units {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: center; */
+      }
+
+      .add-unit-page {
+        height: 100vh;
+        position: absolute;
+        top: 0;
+        width: 100vw;
+        background: var(--dark-theme-background-color);
+        left: 0;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+    </style>
+
+
+
+    <iron-pages selected="{{selectedPage}}" attr-for-selected="name">
+      <section class="add-unit-page open" name="add-unit">
+
+        <div class="header">
+          <paper-icon-button on-click="_closePage" class="close" icon="builtsmart-icons:close"></paper-icon-button>
+        </div>
+
+        <paper-input id="unitName" label="Unit Name" value="{{unitName}}">
+        </paper-input>
+        <paper-input id="clientName" label="Client's Name" value="{{clientName}}"></paper-input>
+        <paper-fab on-click="_addNewUnit" icon="builtsmart-icons:check"></paper-fab>
+      </section>
+      <section name="units">
+        <br>
+        <div class="units">
+          <template is="dom-repeat" items="[[units]]">
+            <div class="unit">
+              <iron-icon class="home-icon" style$="fill: [[item.color]]" icon="builtsmart-icons:home"></iron-icon>
+              <div class="unit-name">
+                [[item.unitName]]
+              </div>
+              <div class="client-name">
+                [[item.clientName]]
+              </div>
+          </template>
+          </div>
+
+          <paper-fab on-click="_addNewUnitPage" icon="builtsmart-icons:add"></paper-fab>
+
+      </section>
+    </iron-pages>
+
+  </template>
+
+  <script>
+    class BuiltSmartUnits extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-units';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          },
+          isDrawerOpened: {
+            type: Boolean,
+            value: false
+          },
+          units: {
+            type: Array,
+            value: () => {
+              return []
+            }
+          },
+          unitName: {
+            type: String,
+            value: ""
+          },
+          clientName: {
+            type: String,
+            value: ""
+          },
+          selectedPage: {
+            type: String,
+            value: "add-unit"
+          }
+        }
+
+      }
+
+      static get observers() {
+        return [
+          '_populateUnits(selectedPage)',
+          '_setPageTitle(selectedPage)'
+        ];
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this._getAffiliatedUnits();
+      }
+
+      _addNewUnit() {
+        if (this._validateFields()) {
+          const key = firebase.database().ref().child('units').push().key;
+
+          const color = 'rgb(' + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 255) + ',' +
+            Math
+            .round(
+              Math.random() * 255) + ')';
+
+          let updates = {};
+          updates['/units/' + key] = {
+            unitName: this.unitName,
+            clientName: this.clientName,
+            color: color
+          };
+
+          firebase.database().ref().update(updates)
+            .then(s => {
+              firebase.database().ref('units/' + key + '/users').push({
+                uid: this.user.uid
+              });
+
+              // save the unit ID in user's node
+              firebase.database().ref(`users/${this.user.uid}/units`).push({
+                unitID: key
+              });
+
+              // reset the fields
+              this.unitName = "";
+              this.clientName = "";
+            });
+        }
+      }
+
+      _validateFields() {
+        let isValidUnitName = false;
+        let isValidClientName = false;
+
+        if (this.unitName.length > 0) {
+          isValidUnitName = true;
+          this.$.unitName.invalid = false;
+        } else {
+          this.$.unitName.invalid = true;
+        }
+
+        if (this.clientName.length > 0) {
+          isValidClientName = true;
+          this.$.clientName.invalid = false;
+        } else {
+          this.$.clientName.invalid = true;
+        }
+
+        if (isValidUnitName && isValidClientName) {
+          return true;
+        }
+      }
+
+
+      _getAffiliatedUnits() {
+        firebase.database().ref(`users/${this.user.uid}/units`)
+          .on('value', s => {
+            if (s.val() && Object.values(s.val()).length > 0) {
+              this.selectedPage = 'units';
+            } else {
+              this.selectedPage = 'add-unit';
+            }
+          });
+      }
+
+      _populateUnits(selectedPage) {
+        if (selectedPage == 'units') {
+          this.units = [];
+          firebase.database().ref(`users/${this.user.uid}/units`)
+            .once('value', s => {
+              if (s.val() && Object.values(s.val()).length > 0) {
+                const usersUnits = Object.values(s.val());
+                usersUnits.forEach(unit => {
+                  firebase.database().ref('units/' + unit.unitID)
+                    .once('value', t => {
+                      this.push('units', t.val());
+                    })
+                });
+              }
+            })
+        }
+      }
+
+      _addNewUnitPage() {
+        this.selectedPage = 'add-unit';
+      }
+
+      _setPageTitle(selectedPage) {
+        const pageTitle = selectedPage == 'units' ? 'Units' : 'Add Unit';
+        this.dispatchEvent(new CustomEvent("page-changed", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            pageTitle: this.selectedPage == 'units' ? pageTitle : ''
+          }
+        }));
+      }
+
+      _closePage() {
+        this.selectedPage = 'units';
+      }
+
+
+
+
+    }
+
+    window.customElements.define(BuiltSmartUnits.is, BuiltSmartUnits);
+  </script>
+</dom-module>

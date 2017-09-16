@@ -82,11 +82,13 @@
 
 
       <template is="dom-repeat" items="[[_getMenuItems(userData.userType)]]">
-        <paper-icon-item on-click="_clickHandler">
-          <iron-icon icon="[[item.icon]]" slot="item-icon"></iron-icon>
-          <paper-ripple></paper-ripple>
-          [[item.name]]
-        </paper-icon-item>
+        <a href="[[item.url]]" on-click="_clickHandler">
+          <paper-icon-item>
+            <iron-icon icon="[[item.icon]]" slot="item-icon"></iron-icon>
+            <paper-ripple></paper-ripple>
+            [[item.name]]
+          </paper-icon-item>
+        </a>
       </template>
     </div>
 
@@ -133,16 +135,20 @@
               return [{
                   "installer": [{
                     "name": "Dashboard",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "/units"
                   }, {
                     "name": "Devices",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "/devices"
                   }, {
                     "name": "Users",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "/users"
                   }, {
                     "name": "Settings",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "settings"
                   }, {
                     "name": "Sign Out",
                     "icon": "builtsmart-icons:close"
@@ -151,10 +157,12 @@
                 {
                   "user": [{
                     "name": "Units",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "units"
                   }, {
                     "name": "Settings",
-                    "icon": "builtsmart-icons:close"
+                    "icon": "builtsmart-icons:close",
+                    "url": "settings"
                   }, {
                     "name": "Sign Out",
                     "icon": "builtsmart-icons:close"
@@ -178,6 +186,10 @@
         } else {
           this.style.transform = `translate3d(-500px, 0, 0)`;
         }
+      }
+
+      closeDrawer() {
+        this.style.transform = `translate3d(-500px, 0, 0)`;
       }
 
       _getMenuItems(userType) {

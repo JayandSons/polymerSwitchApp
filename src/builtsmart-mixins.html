@@ -1,0 +1,16 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/utils/mixin.html">
+
+<script>
+  BuiltSmartMixins = function (superClass) {
+    return class extends superClass {
+      importHref(href) {
+        return new Promise((resolve, reject) => {
+          Polymer.Base.importHref(href, function (e) {
+            resolve(e.target);
+          }, reject, true);
+        });
+      }
+    }
+  }
+</script>

@@ -1,0 +1,162 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="builtsmart-devices">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        height: 100%;
+      }
+
+      paper-fab {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        background-color: var(--app-primary-color);
+      }
+
+      .devices {
+        padding: 16px;
+        padding-top: 0;
+      }
+
+      .add-device-page {
+        height: 100vh;
+        position: absolute;
+        top: 0;
+        width: 100vw;
+        background: var(--dark-theme-background-color);
+        left: 0;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+    </style>
+
+
+    <iron-pages selected="{{selectedPage}}" attr-for-selected="name">
+      <section class="add-devices-page open" name="add-device">
+
+        <div class="header">
+          <paper-icon-button on-click="_closePage" class="close" icon="builtsmart-icons:close"></paper-icon-button>
+        </div>
+
+        <paper-input id="deviceName" label="Device Name" value="{{deviceName}}">
+        </paper-input>
+        <paper-input id="clientName" label="Client's Name" value="{{clientName}}"></paper-input>
+        <paper-fab on-click="_addNewDevice" icon="builtsmart-icons:check"></paper-fab>
+      </section>
+      <section name="devices">
+        <br>
+        <div class="devices">
+          <template is="dom-repeat" items="[[devices]]">
+            <div class="device">
+              <iron-icon class="home-icon" style$="fill: [[item.color]]" icon="builtsmart-icons:home"></iron-icon>
+              <div class="device-name">
+                [[item.deviceName]]
+              </div>
+              <div class="client-name">
+                [[item.clientName]]
+              </div>
+          </template>
+          </div>
+
+          <paper-fab on-click="_addNewDevicePage" icon="builtsmart-icons:add"></paper-fab>
+
+      </section>
+    </iron-pages>
+
+  </template>
+
+  <script>
+    class BuiltSmartDevices extends Polymer.Element {
+      static get is() {
+        return 'builtsmart-devices';
+      }
+
+      static get properties() {
+        return {
+          userData: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          user: {
+            type: Object,
+            value: Object,
+            notify: true
+          },
+          signedIn: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          statusKnown: {
+            type: Boolean,
+            value: false,
+            notify: true
+          },
+          page: {
+            type: String
+          },
+          selectedPage: {
+            type: String,
+            value: "devices"
+          }
+        }
+      }
+
+      static get observers() {
+        return [
+          '_populateDevices(selectedPage)',
+          '_setPageTitle(selectedPage)'
+        ];
+      }
+
+      _setPageTitle(selectedPage) {
+        const pageTitle = selectedPage == 'devices' ? 'Devices' : 'Add Device';
+        this.dispatchEvent(new CustomEvent("page-changed", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            pageTitle: this.selectedPage == 'devices' ? pageTitle : ''
+          }
+        }));
+      }
+
+      _populateDevices(selectedPage) {
+        if (selectedPage == 'devices') {
+          this.devices = [];
+          firebase.database().ref(`users/${this.user.uid}/units`)
+            .once('value', s => {
+              let devices = s.val();
+              if (this.currentUnit === undefined) {
+                Object.keys(devices).map(key => {
+                  if (key) {
+                    firebase.database().ref(`units/${key}/devices`)
+                      .once('value', d => {
+                        this.push('devices', d.val());
+                      });
+                  }
+                });
+              }
+            });
+        }
+      }
+
+
+      _addNewDevicePage() {
+        this.selectedPage = 'add-device';
+      }
+
+
+    }
+
+    window.customElements.define(BuiltSmartDevices.is, BuiltSmartDevices);
+  </script>
+</dom-module>

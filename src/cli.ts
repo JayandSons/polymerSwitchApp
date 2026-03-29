@@ -13,7 +13,7 @@ program
   .option("--no-open", "do not open browser on start")
   .action(async (opts) => {
     const port = parseInt(opts.port, 10);
-    const { app, store } = createServer();
+    const { app, store, ptyManager } = createServer();
 
     const httpServer = app.listen(port, () => {
       const url = `http://localhost:${port}`;
@@ -24,7 +24,7 @@ program
       }
     });
 
-    setupWebSocket(httpServer, store);
+    setupWebSocket(httpServer, store, ptyManager);
   });
 
 program.parse();

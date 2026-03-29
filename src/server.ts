@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import { TaskFileStore } from "./task-store.js";
+import { PtyManager } from "./pty-manager.js";
 import { createAppRouter } from "./trpc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -11,14 +12,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export function createServer(repoRoot?: string) {
   const root = repoRoot ?? process.cwd();
   const store = new TaskFileStore(root);
+  const ptyManager = new PtyManager();
   const app = express();
-  const router = createAppRouter(store);
+  const router = createAppRouter(store, ptyManager);
 
   // tRPC handler
   const trpcHandler = createHTTPHandler({ router });
   app.all("/trpc/{*splat}", (req, res) => {
-    // Strip /trpc prefix for the handler
-    const originalUrl = req.url;
     req.url = req.url.replace(/^\/trpc/, "");
     trpcHandler(req, res);
   });
@@ -37,5 +37,9 @@ export function createServer(repoRoot?: string) {
     });
   }
 
-  return { app, store, router };
+  // Clean up PTY sessions on exit
+  process.on("SIGINT", () => { ptyManager.killAll(); process.exit(0); });
+  process.on("SIGTERM", () => { ptyManager.killAll(); process.exit(0); });
+
+  return { app, store, ptyManager, router };
 }

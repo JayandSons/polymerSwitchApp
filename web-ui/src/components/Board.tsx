@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -8,10 +8,10 @@ import {
   closestCorners,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
 } from "@dnd-kit/core";
 import { KanbanColumn } from "./KanbanColumn.js";
 import { CreateTaskModal } from "./CreateTaskModal.js";
+import { TerminalPanel } from "./TerminalPanel.js";
 import { useTaskStore } from "../lib/useTaskStore.js";
 import { COLUMNS, type Column, type Task } from "../lib/types.js";
 
@@ -19,6 +19,7 @@ export function Board() {
   const { tasks, createTask, updateTask, deleteTask, reorderTask } = useTaskStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -28,6 +29,18 @@ export function Board() {
     tasks.filter((t) => t.column === col);
 
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
+
+  // Cmd+J / Ctrl+J to toggle terminal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "j") {
+        e.preventDefault();
+        setTerminalOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -43,17 +56,14 @@ export function Board() {
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
-      // Determine target column and order
       let targetColumn: Column;
       let targetOrder: number;
 
-      // Check if dropped over a column
       const columnIds = COLUMNS.map((c) => c.id);
       if (columnIds.includes(over.id as Column)) {
         targetColumn = over.id as Column;
         targetOrder = tasksByColumn(targetColumn).filter((t) => t.id !== taskId).length;
       } else {
-        // Dropped over another task
         const overTask = tasks.find((t) => t.id === over.id);
         if (!overTask) return;
         targetColumn = overTask.column;
@@ -84,25 +94,43 @@ export function Board() {
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
           Kanban Agent Runner
         </h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          style={{
-            padding: "8px 16px",
-            background: "#3b82f6",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          + New Task
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            onClick={() => setTerminalOpen((v) => !v)}
+            style={{
+              padding: "8px 12px",
+              background: terminalOpen ? "#334155" : "#e2e8f0",
+              color: terminalOpen ? "#fff" : "#334155",
+              border: "none",
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            title="Toggle terminal (⌘J)"
+          >
+            Terminal
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              padding: "8px 16px",
+              background: "#3b82f6",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            + New Task
+          </button>
+        </div>
       </header>
 
       {/* Board */}
-      <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
+      <div style={{ flex: 1, overflow: "auto", padding: 20, paddingBottom: terminalOpen ? 320 : 20 }}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -145,6 +173,11 @@ export function Board() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreate={createTask}
+      />
+
+      <TerminalPanel
+        open={terminalOpen}
+        onToggle={() => setTerminalOpen((v) => !v)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { createServer } from "./server.js";
+import { setupWebSocket } from "./ws-broadcast.js";
 import open from "open";
 
 const program = new Command();
@@ -12,18 +13,18 @@ program
   .option("--no-open", "do not open browser on start")
   .action(async (opts) => {
     const port = parseInt(opts.port, 10);
-    const app = createServer();
+    const { app, store } = createServer();
 
-    app.listen(port, () => {
+    const httpServer = app.listen(port, () => {
       const url = `http://localhost:${port}`;
       console.log(`\n  Kanban Agent Runner listening at ${url}\n`);
 
       if (opts.open) {
-        open(url).catch(() => {
-          // silently ignore if browser can't be opened
-        });
+        open(url).catch(() => {});
       }
     });
+
+    setupWebSocket(httpServer, store);
   });
 
 program.parse();

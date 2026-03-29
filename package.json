@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "concurrently -n server,ui -c blue,green \"npm run dev:server\" \"npm run dev:ui\"",
-    "dev:server": "tsx watch src/cli.ts --port 3100 --no-open",
+    "dev:server": "tsx watch ./src/cli.ts -- --port 3100 --no-open",
     "dev:ui": "npm run dev --workspace=web-ui",
     "build:ui": "npm run build --workspace=web-ui",
     "start": "tsx src/cli.ts",

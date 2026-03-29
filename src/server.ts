@@ -5,6 +5,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { TaskFileStore } from "./task-store.js";
 import { PtyManager } from "./pty-manager.js";
+import { WorktreeManager } from "./worktree-manager.js";
 import { createAppRouter } from "./trpc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -13,8 +14,9 @@ export function createServer(repoRoot?: string) {
   const root = repoRoot ?? process.cwd();
   const store = new TaskFileStore(root);
   const ptyManager = new PtyManager();
+  const worktreeManager = new WorktreeManager(root);
   const app = express();
-  const router = createAppRouter(store, ptyManager);
+  const router = createAppRouter(store, ptyManager, worktreeManager);
 
   // tRPC handler
   const trpcHandler = createHTTPHandler({ router });

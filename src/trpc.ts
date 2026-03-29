@@ -2,13 +2,18 @@ import { initTRPC } from "@trpc/server";
 import { z } from "zod";
 import type { TaskFileStore } from "./task-store.js";
 import type { PtyManager } from "./pty-manager.js";
+import type { WorktreeManager } from "./worktree-manager.js";
 import type { Column } from "./types.js";
 
 const t = initTRPC.create();
 
 const columnSchema = z.enum(["backlog", "in_progress", "review", "done", "trash"]);
 
-export function createAppRouter(store: TaskFileStore, ptyManager: PtyManager) {
+export function createAppRouter(
+  store: TaskFileStore,
+  ptyManager: PtyManager,
+  worktreeManager: WorktreeManager,
+) {
   return t.router({
     tasks: t.router({
       list: t.procedure.query(() => {
@@ -53,6 +58,22 @@ export function createAppRouter(store: TaskFileStore, ptyManager: PtyManager) {
         .mutation(({ input }) => {
           return store.reorder(input.taskId, input.column as Column, input.order);
         }),
+
+      start: t.procedure
+        .input(z.object({ id: z.string() }))
+        .mutation(({ input }) => {
+          const task = store.list().find((t) => t.id === input.id);
+          if (!task) throw new Error("Task not found");
+
+          // Create worktree
+          const wt = worktreeManager.create(task.id);
+
+          // Update task with worktree info and move to in_progress
+          return store.update(task.id, {
+            column: "in_progress",
+            worktree: { path: wt.path, branch: wt.branch },
+          });
+        }),
     }),
 
     terminal: t.router({
@@ -84,6 +105,39 @@ export function createAppRouter(store: TaskFileStore, ptyManager: PtyManager) {
         .input(z.object({ id: z.string() }))
         .mutation(({ input }) => {
           return ptyManager.kill(input.id);
+        }),
+    }),
+
+    worktrees: t.router({
+      list: t.procedure.query(() => {
+        return worktreeManager.list();
+      }),
+
+      create: t.procedure
+        .input(z.object({ taskId: z.string() }))
+        .mutation(({ input }) => {
+          return worktreeManager.create(input.taskId);
+        }),
+
+      remove: t.procedure
+        .input(z.object({ taskId: z.string() }))
+        .mutation(({ input }) => {
+          const result = worktreeManager.remove(input.taskId);
+          // Clear worktree info from the task
+          const task = store.list().find((t) => t.id === input.taskId);
+          if (task) {
+            store.update(input.taskId, { worktree: undefined });
+          }
+          return result;
+        }),
+
+      status: t.procedure
+        .input(z.object({ taskId: z.string() }))
+        .query(({ input }) => {
+          return {
+            exists: worktreeManager.has(input.taskId),
+            path: worktreeManager.getPath(input.taskId),
+          };
         }),
     }),
   });

@@ -16,6 +16,10 @@ export interface Task {
   order: number;
   createdAt: string;
   updatedAt: string;
+  worktree?: {
+    path: string;
+    branch: string;
+  };
 }
 
 export interface TaskStore {

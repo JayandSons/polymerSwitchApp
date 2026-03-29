@@ -9,9 +9,11 @@ interface KanbanColumnProps {
   tasks: Task[];
   onUpdate: (id: string, patch: Partial<Pick<Task, "title" | "description">>) => void;
   onDelete: (id: string) => void;
+  onStart?: (id: string) => void;
+  onTrash?: (id: string) => void;
 }
 
-export function KanbanColumn({ id, label, tasks, onUpdate, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ id, label, tasks, onUpdate, onDelete, onStart, onTrash }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   const sorted = [...tasks].sort((a, b) => a.order - b.order);
@@ -57,7 +59,14 @@ export function KanbanColumn({ id, label, tasks, onUpdate, onDelete }: KanbanCol
       <div style={{ flex: 1, minHeight: 40 }}>
         <SortableContext items={sorted.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {sorted.map((task) => (
-            <TaskCard key={task.id} task={task} onUpdate={onUpdate} onDelete={onDelete} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              onStart={onStart}
+              onTrash={onTrash}
+            />
           ))}
         </SortableContext>
       </div>

@@ -7,9 +7,11 @@ interface TaskCardProps {
   task: Task;
   onUpdate: (id: string, patch: Partial<Pick<Task, "title" | "description">>) => void;
   onDelete: (id: string) => void;
+  onStart?: (id: string) => void;
+  onTrash?: (id: string) => void;
 }
 
-export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCardProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -23,6 +25,9 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     isDragging,
   } = useSortable({ id: task.id });
 
+  const hasWorktree = !!task.worktree;
+  const isBacklog = task.column === "backlog";
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -31,7 +36,7 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     marginBottom: 8,
     background: "#fff",
     borderRadius: 6,
-    border: "1px solid #e2e8f0",
+    border: hasWorktree ? "1px solid #86efac" : "1px solid #e2e8f0",
     boxShadow: isDragging ? "0 4px 12px rgba(0,0,0,0.15)" : "0 1px 3px rgba(0,0,0,0.06)",
     cursor: "grab",
   };
@@ -105,6 +110,15 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
           {task.title}
         </div>
         <div style={{ display: "flex", gap: 4, flexShrink: 0, marginLeft: 8 }}>
+          {isBacklog && !hasWorktree && onStart && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onStart(task.id); }}
+              style={{ ...iconBtnStyle, color: "#22c55e" }}
+              title="Start task (creates worktree)"
+            >
+              &#9654;
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); setEditing(true); }}
             style={{ ...iconBtnStyle, color: "#64748b" }}
@@ -112,18 +126,41 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
           >
             &#9998;
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-            style={{ ...iconBtnStyle, color: "#ef4444" }}
-            title="Delete"
-          >
-            &times;
-          </button>
+          {onTrash ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onTrash(task.id); }}
+              style={{ ...iconBtnStyle, color: "#ef4444" }}
+              title="Move to trash (removes worktree)"
+            >
+              &times;
+            </button>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+              style={{ ...iconBtnStyle, color: "#ef4444" }}
+              title="Delete"
+            >
+              &times;
+            </button>
+          )}
         </div>
       </div>
       {task.description && (
         <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
           {task.description}
+        </div>
+      )}
+      {hasWorktree && (
+        <div style={{
+          fontSize: 11,
+          color: "#16a34a",
+          marginTop: 6,
+          padding: "3px 6px",
+          background: "#f0fdf4",
+          borderRadius: 4,
+          fontFamily: "monospace",
+        }}>
+          {task.worktree!.branch}
         </div>
       )}
     </div>

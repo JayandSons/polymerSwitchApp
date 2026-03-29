@@ -57,5 +57,18 @@ export function useTaskStore() {
     await trpc.tasks.reorder.mutate({ taskId, column, order });
   }, []);
 
-  return { tasks, createTask, updateTask, deleteTask, reorderTask };
+  const startTask = useCallback(async (id: string) => {
+    await trpc.tasks.start.mutate({ id });
+  }, []);
+
+  const trashTask = useCallback(async (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    // Clean up worktree if present
+    if (task?.worktree) {
+      await trpc.worktrees.remove.mutate({ taskId: id }).catch(() => {});
+    }
+    await trpc.tasks.reorder.mutate({ taskId: id, column: "trash", order: 0 });
+  }, [tasks]);
+
+  return { tasks, createTask, updateTask, deleteTask, reorderTask, startTask, trashTask };
 }

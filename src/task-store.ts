@@ -64,13 +64,14 @@ export class TaskFileStore {
     return task;
   }
 
-  update(id: string, patch: Partial<Pick<Task, "title" | "description" | "column" | "order">>): Task | null {
+  update(id: string, patch: Partial<Pick<Task, "title" | "description" | "column" | "order" | "worktree">>): Task | null {
     const task = this.data.tasks.find((t) => t.id === id);
     if (!task) return null;
     if (patch.title !== undefined) task.title = patch.title;
     if (patch.description !== undefined) task.description = patch.description;
     if (patch.column !== undefined) task.column = patch.column;
     if (patch.order !== undefined) task.order = patch.order;
+    if (patch.worktree !== undefined) task.worktree = patch.worktree;
     task.updatedAt = new Date().toISOString();
     this.save();
     return task;

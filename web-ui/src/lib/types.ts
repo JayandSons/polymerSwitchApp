@@ -1,6 +1,3 @@
-// Shared types re-exported for the UI
-// Mirrors src/types.ts — kept in sync manually for now
-
 export type Column = "backlog" | "in_progress" | "review" | "done" | "trash";
 
 export const COLUMNS: { id: Column; label: string }[] = [
@@ -19,4 +16,8 @@ export interface Task {
   order: number;
   createdAt: string;
   updatedAt: string;
+  worktree?: {
+    path: string;
+    branch: string;
+  };
 }

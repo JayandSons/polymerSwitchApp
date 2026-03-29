@@ -16,7 +16,7 @@ import { useTaskStore } from "../lib/useTaskStore.js";
 import { COLUMNS, type Column, type Task } from "../lib/types.js";
 
 export function Board() {
-  const { tasks, createTask, updateTask, deleteTask, reorderTask } = useTaskStore();
+  const { tasks, createTask, updateTask, deleteTask, reorderTask, startTask, trashTask } = useTaskStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -146,6 +146,8 @@ export function Board() {
                 tasks={tasksByColumn(col.id)}
                 onUpdate={updateTask}
                 onDelete={deleteTask}
+                onStart={startTask}
+                onTrash={trashTask}
               />
             ))}
           </div>

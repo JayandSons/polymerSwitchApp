@@ -11,9 +11,10 @@ interface TermTab {
 interface TerminalPanelProps {
   open: boolean;
   onToggle: () => void;
+  focusSessionId?: string | null;
 }
 
-export function TerminalPanel({ open, onToggle }: TerminalPanelProps) {
+export function TerminalPanel({ open, onToggle, focusSessionId }: TerminalPanelProps) {
   const [tabs, setTabs] = useState<TermTab[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [height, setHeight] = useState(300);
@@ -46,12 +47,33 @@ export function TerminalPanel({ open, onToggle }: TerminalPanelProps) {
     });
   }, [tabs, activeTab]);
 
-  // Auto-create first terminal when panel opens
+  // Auto-create first terminal when panel opens (unless focusing an agent session)
   useEffect(() => {
-    if (open && tabs.length === 0) {
+    if (open && tabs.length === 0 && !focusSessionId) {
       createTab();
     }
   }, [open]);
+
+  // Focus an agent's terminal session
+  useEffect(() => {
+    if (!open || !focusSessionId) return;
+
+    // Check if we already have a tab for this session
+    const existing = tabs.find((t) => t.sessionId === focusSessionId);
+    if (existing) {
+      setActiveTab(existing.id);
+      return;
+    }
+
+    // Create a new tab for the agent session
+    const tab: TermTab = {
+      id: crypto.randomUUID(),
+      sessionId: focusSessionId,
+      label: `Agent`,
+    };
+    setTabs((prev) => [...prev, tab]);
+    setActiveTab(tab.id);
+  }, [focusSessionId, open]);
 
   // Resize drag handling
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

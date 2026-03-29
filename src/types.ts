@@ -8,6 +8,16 @@ export const COLUMNS: { id: Column; label: string }[] = [
   { id: "trash", label: "Trash" },
 ];
 
+export type AgentStatus = "idle" | "working" | "needs_review" | "error" | "done";
+
+export interface AgentState {
+  status: AgentStatus;
+  agentName: string;
+  terminalSessionId?: string;
+  lastActivity?: string;
+  startedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -20,6 +30,7 @@ export interface Task {
     path: string;
     branch: string;
   };
+  agent?: AgentState;
 }
 
 export interface TaskStore {

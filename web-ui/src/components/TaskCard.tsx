@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Task } from "../lib/types.js";
+import type { Task, AgentStatus } from "../lib/types.js";
 
 interface TaskCardProps {
   task: Task;
@@ -9,9 +9,18 @@ interface TaskCardProps {
   onDelete: (id: string) => void;
   onStart?: (id: string) => void;
   onTrash?: (id: string) => void;
+  onOpenTerminal?: (sessionId: string) => void;
 }
 
-export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCardProps) {
+const STATUS_BADGE: Record<AgentStatus, { label: string; color: string; bg: string }> = {
+  idle: { label: "Idle", color: "#64748b", bg: "#f1f5f9" },
+  working: { label: "Working", color: "#16a34a", bg: "#f0fdf4" },
+  needs_review: { label: "Needs Review", color: "#d97706", bg: "#fefce8" },
+  error: { label: "Error", color: "#dc2626", bg: "#fef2f2" },
+  done: { label: "Done", color: "#6366f1", bg: "#eef2ff" },
+};
+
+export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash, onOpenTerminal }: TaskCardProps) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -26,7 +35,13 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
   } = useSortable({ id: task.id });
 
   const hasWorktree = !!task.worktree;
+  const hasAgent = !!task.agent;
   const isBacklog = task.column === "backlog";
+  const agentBadge = task.agent ? STATUS_BADGE[task.agent.status] : null;
+
+  const borderColor = hasAgent
+    ? (task.agent!.status === "working" ? "#86efac" : task.agent!.status === "needs_review" ? "#fde68a" : "#e2e8f0")
+    : hasWorktree ? "#86efac" : "#e2e8f0";
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -36,7 +51,7 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
     marginBottom: 8,
     background: "#fff",
     borderRadius: 6,
-    border: hasWorktree ? "1px solid #86efac" : "1px solid #e2e8f0",
+    border: `1px solid ${borderColor}`,
     boxShadow: isDragging ? "0 4px 12px rgba(0,0,0,0.15)" : "0 1px 3px rgba(0,0,0,0.06)",
     cursor: "grab",
   };
@@ -102,6 +117,7 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {/* Header: title + action buttons */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div
           style={{ fontWeight: 600, fontSize: 14, flex: 1, cursor: "pointer" }}
@@ -110,13 +126,22 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
           {task.title}
         </div>
         <div style={{ display: "flex", gap: 4, flexShrink: 0, marginLeft: 8 }}>
-          {isBacklog && !hasWorktree && onStart && (
+          {isBacklog && !hasAgent && onStart && (
             <button
               onClick={(e) => { e.stopPropagation(); onStart(task.id); }}
               style={{ ...iconBtnStyle, color: "#22c55e" }}
-              title="Start task (creates worktree)"
+              title="Start task (creates worktree + launches agent)"
             >
               &#9654;
+            </button>
+          )}
+          {hasAgent && task.agent!.terminalSessionId && onOpenTerminal && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenTerminal(task.agent!.terminalSessionId!); }}
+              style={{ ...iconBtnStyle, color: "#3b82f6" }}
+              title="Open agent terminal"
+            >
+              &#9638;
             </button>
           )}
           <button
@@ -130,7 +155,7 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
             <button
               onClick={(e) => { e.stopPropagation(); onTrash(task.id); }}
               style={{ ...iconBtnStyle, color: "#ef4444" }}
-              title="Move to trash (removes worktree)"
+              title="Move to trash"
             >
               &times;
             </button>
@@ -145,12 +170,48 @@ export function TaskCard({ task, onUpdate, onDelete, onStart, onTrash }: TaskCar
           )}
         </div>
       </div>
+
+      {/* Description */}
       {task.description && (
         <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
           {task.description}
         </div>
       )}
-      {hasWorktree && (
+
+      {/* Agent status badge + activity */}
+      {hasAgent && agentBadge && (
+        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: agentBadge.color,
+              background: agentBadge.bg,
+              padding: "2px 8px",
+              borderRadius: 10,
+            }}>
+              {agentBadge.label}
+            </span>
+            <span style={{ fontSize: 11, color: "#94a3b8" }}>
+              {task.agent!.agentName}
+            </span>
+          </div>
+          {task.agent!.lastActivity && (
+            <div style={{
+              fontSize: 11,
+              color: "#64748b",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
+              {task.agent!.lastActivity}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Worktree branch */}
+      {hasWorktree && !hasAgent && (
         <div style={{
           fontSize: 11,
           color: "#16a34a",

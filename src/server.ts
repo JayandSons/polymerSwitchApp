@@ -6,17 +6,21 @@ import fs from "node:fs";
 import { TaskFileStore } from "./task-store.js";
 import { PtyManager } from "./pty-manager.js";
 import { WorktreeManager } from "./worktree-manager.js";
+import { AgentLauncher } from "./agent-launcher.js";
+import { HookEngine } from "./hook-engine.js";
 import { createAppRouter } from "./trpc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export function createServer(repoRoot?: string) {
+export function createServer(repoRoot?: string, port = 3100) {
   const root = repoRoot ?? process.cwd();
   const store = new TaskFileStore(root);
   const ptyManager = new PtyManager();
   const worktreeManager = new WorktreeManager(root);
+  const agentLauncher = new AgentLauncher(ptyManager, port);
+  const hookEngine = new HookEngine(store, agentLauncher);
   const app = express();
-  const router = createAppRouter(store, ptyManager, worktreeManager);
+  const router = createAppRouter(store, ptyManager, worktreeManager, agentLauncher, hookEngine);
 
   // tRPC handler
   const trpcHandler = createHTTPHandler({ router });
@@ -43,5 +47,5 @@ export function createServer(repoRoot?: string) {
   process.on("SIGINT", () => { ptyManager.killAll(); process.exit(0); });
   process.on("SIGTERM", () => { ptyManager.killAll(); process.exit(0); });
 
-  return { app, store, ptyManager, router };
+  return { app, store, ptyManager, worktreeManager, agentLauncher, hookEngine, router };
 }

@@ -57,8 +57,8 @@ export function useTaskStore() {
     await trpc.tasks.reorder.mutate({ taskId, column, order });
   }, []);
 
-  const startTask = useCallback(async (id: string) => {
-    await trpc.tasks.start.mutate({ id });
+  const startTask = useCallback(async (id: string, agentName?: string) => {
+    await trpc.tasks.start.mutate({ id, agentName });
   }, []);
 
   const trashTask = useCallback(async (id: string) => {

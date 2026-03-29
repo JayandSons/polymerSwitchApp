@@ -20,6 +20,12 @@ export function Board() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [focusSessionId, setFocusSessionId] = useState<string | null>(null);
+
+  const handleOpenTerminal = useCallback((sessionId: string) => {
+    setTerminalOpen(true);
+    setFocusSessionId(sessionId);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -148,6 +154,7 @@ export function Board() {
                 onDelete={deleteTask}
                 onStart={startTask}
                 onTrash={trashTask}
+                onOpenTerminal={handleOpenTerminal}
               />
             ))}
           </div>
@@ -180,6 +187,7 @@ export function Board() {
       <TerminalPanel
         open={terminalOpen}
         onToggle={() => setTerminalOpen((v) => !v)}
+        focusSessionId={focusSessionId}
       />
     </div>
   );

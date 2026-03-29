@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { TaskFileStore } from "./task-store.js";
 import type { PtyManager } from "./pty-manager.js";
 import type { WorktreeManager } from "./worktree-manager.js";
+import type { AgentLauncher } from "./agent-launcher.js";
+import type { HookEngine } from "./hook-engine.js";
 import type { Column } from "./types.js";
 
 const t = initTRPC.create();
@@ -13,6 +15,8 @@ export function createAppRouter(
   store: TaskFileStore,
   ptyManager: PtyManager,
   worktreeManager: WorktreeManager,
+  agentLauncher: AgentLauncher,
+  hookEngine: HookEngine,
 ) {
   return t.router({
     tasks: t.router({
@@ -60,18 +64,32 @@ export function createAppRouter(
         }),
 
       start: t.procedure
-        .input(z.object({ id: z.string() }))
+        .input(z.object({
+          id: z.string(),
+          agentName: z.string().optional(),
+        }))
         .mutation(({ input }) => {
           const task = store.list().find((t) => t.id === input.id);
           if (!task) throw new Error("Task not found");
 
-          // Create worktree
-          const wt = worktreeManager.create(task.id);
+          // Create worktree if not already present
+          if (!task.worktree) {
+            const wt = worktreeManager.create(task.id);
+            store.update(task.id, {
+              column: "in_progress",
+              worktree: { path: wt.path, branch: wt.branch },
+            });
+          }
 
-          // Update task with worktree info and move to in_progress
+          // Re-read task after worktree update
+          const updated = store.list().find((t) => t.id === input.id)!;
+
+          // Launch agent
+          const { agentState } = agentLauncher.launch(updated, input.agentName);
+
           return store.update(task.id, {
             column: "in_progress",
-            worktree: { path: wt.path, branch: wt.branch },
+            agent: agentState,
           });
         }),
     }),
@@ -123,7 +141,6 @@ export function createAppRouter(
         .input(z.object({ taskId: z.string() }))
         .mutation(({ input }) => {
           const result = worktreeManager.remove(input.taskId);
-          // Clear worktree info from the task
           const task = store.list().find((t) => t.id === input.taskId);
           if (task) {
             store.update(input.taskId, { worktree: undefined });
@@ -138,6 +155,38 @@ export function createAppRouter(
             exists: worktreeManager.has(input.taskId),
             path: worktreeManager.getPath(input.taskId),
           };
+        }),
+    }),
+
+    agents: t.router({
+      detect: t.procedure.query(() => {
+        return agentLauncher.detectAgents().map((a) => ({
+          name: a.name,
+          command: a.command,
+        }));
+      }),
+
+      known: t.procedure.query(() => {
+        return agentLauncher.getKnownAgents().map((a) => ({
+          name: a.name,
+          command: a.command,
+        }));
+      }),
+    }),
+
+    hooks: t.router({
+      ingest: t.procedure
+        .input(z.object({
+          taskId: z.string(),
+          event: z.string(),
+          data: z.record(z.unknown()).optional(),
+        }))
+        .mutation(({ input }) => {
+          return hookEngine.ingest({
+            taskId: input.taskId,
+            event: input.event,
+            data: input.data as Record<string, unknown> | undefined,
+          });
         }),
     }),
   });

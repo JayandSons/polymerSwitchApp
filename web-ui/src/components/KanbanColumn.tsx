@@ -11,9 +11,10 @@ interface KanbanColumnProps {
   onDelete: (id: string) => void;
   onStart?: (id: string) => void;
   onTrash?: (id: string) => void;
+  onOpenTerminal?: (sessionId: string) => void;
 }
 
-export function KanbanColumn({ id, label, tasks, onUpdate, onDelete, onStart, onTrash }: KanbanColumnProps) {
+export function KanbanColumn({ id, label, tasks, onUpdate, onDelete, onStart, onTrash, onOpenTerminal }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   const sorted = [...tasks].sort((a, b) => a.order - b.order);
@@ -66,6 +67,7 @@ export function KanbanColumn({ id, label, tasks, onUpdate, onDelete, onStart, on
               onDelete={onDelete}
               onStart={onStart}
               onTrash={onTrash}
+              onOpenTerminal={onOpenTerminal}
             />
           ))}
         </SortableContext>

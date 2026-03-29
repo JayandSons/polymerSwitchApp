@@ -64,7 +64,7 @@ export class TaskFileStore {
     return task;
   }
 
-  update(id: string, patch: Partial<Pick<Task, "title" | "description" | "column" | "order" | "worktree">>): Task | null {
+  update(id: string, patch: Partial<Pick<Task, "title" | "description" | "column" | "order" | "worktree" | "agent">>): Task | null {
     const task = this.data.tasks.find((t) => t.id === id);
     if (!task) return null;
     if (patch.title !== undefined) task.title = patch.title;
@@ -72,6 +72,7 @@ export class TaskFileStore {
     if (patch.column !== undefined) task.column = patch.column;
     if (patch.order !== undefined) task.order = patch.order;
     if (patch.worktree !== undefined) task.worktree = patch.worktree;
+    if (patch.agent !== undefined) task.agent = patch.agent;
     task.updatedAt = new Date().toISOString();
     this.save();
     return task;
